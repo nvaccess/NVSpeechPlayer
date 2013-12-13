@@ -1,0 +1,43 @@
+####
+# Copyright 2013 Michael Curran <mick@nvaccess.org>.
+    # This program is free software: you can redistribute it and/or modify
+    # it under the terms of the GNU Lesser General Public License version 2.1, as published by
+    # the Free Software Foundation.
+    # This program is distributed in the hope that it will be useful,
+    # but WITHOUT ANY WARRANTY; without even the implied warranty of
+    # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# This license can be found at:
+# http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
+####
+
+Import(['env'])
+
+env=env.Clone(tools=['msvc','mssdk','default'])
+
+env.Append(CPPFLAGS='/EHsc')
+env.Append(CPPDEFINES='UNICODE')
+env.Append(CPPPATH=Dir('.'))
+if env['release']:
+	env.Append(CPPDEFINES=['NDEBUG'])
+	env.Append(CCFLAGS=['/O2','/MT','/arch:SSE2'])
+	env.Append(LINKFLAGS='/release')
+else:
+	env.Append(PDB='${TARGET}.pdb')
+	env.Append(CCFLAGS=['/Od','/MTd'])
+	env.Append(CPPDEFINES=['_DEBUG'])
+
+speechPlayerLib=env.SharedLibrary(
+	target='speechPlayer',
+	source=[
+	'speechPlayer.cpp',
+	'speechWaveGenerator.cpp',
+	'frame.cpp',
+	'player_winmm.cpp',
+	'speechPlayer.def',
+	],
+	LIBS=[
+	'winmm',
+	],
+)
+
+Return(['speechPlayerLib'])

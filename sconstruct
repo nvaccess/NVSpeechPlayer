@@ -1,0 +1,22 @@
+####
+# Copyright 2013 Michael Curran <mick@nvaccess.org>.
+    # This program is free software: you can redistribute it and/or modify
+    # it under the terms of the GNU Lesser General Public License version 2.1, as published by
+    # the Free Software Foundation.
+    # This program is distributed in the hope that it will be useful,
+    # but WITHOUT ANY WARRANTY; without even the implied warranty of
+    # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# This license can be found at:
+# http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
+####
+
+vars=Variables()
+vars.Add(BoolVariable('release','Set to true to build a release version',False))
+
+env=Environment(tools=[],variables=vars,TARGET_ARCH='x86')
+
+targets=env.SConscript('src/sconscript',exports=['env'],variant_dir='build')
+env.Clean(targets,'build')
+installed=env.Install('.',targets)
+
+env.Default([installed])

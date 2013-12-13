@@ -1,0 +1,9 @@
+vowelcharts/
+.sconsign.dblite
+*.lib
+*.exp
+*.pdb
+*.dll
+*.pyc
+*.pyo
+build/

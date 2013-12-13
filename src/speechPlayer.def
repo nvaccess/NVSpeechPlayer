@@ -1,0 +1,4 @@
+EXPORTS
+	speechPlayer_initialize
+	speechPlayer_setNewFrame
+	speechPlayer_terminate
