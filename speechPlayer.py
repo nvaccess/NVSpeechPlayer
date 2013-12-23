@@ -12,22 +12,28 @@
 
 from ctypes import *
 
-class FormantParams(Structure):
-	_fields_=[
-		('frequency',c_double),
-		('bandwidth',c_double),
-		('amplitude',c_double),
-	]
+speechPlayer_frameParam_t=c_double
 
 class Frame(Structure):
-	_fields_=[
-		('voiceAmplitude',c_double),
-		('voicePitch',c_double),
-		('breathyness',c_double),
-		('vibratoOffset',c_double),
-		('vibratoSpeed',c_double),
-		('formantParams',FormantParams*4),
-	]
+	_fields_=[(name,speechPlayer_frameParam_t) for name in [
+		'gain',
+		'voicePitch',
+		'vibratoPitchOffset',
+		'vibratoSpeed',
+		'voiceAmplitude',
+		'voiceTurbulenceAmplitude',
+		'glottalOpenQuotient',
+		'dcf1','dcb1',
+		'aspirationAmplitude',
+		'cf1','cf2','cf3','cf4','cf5','cf6','cfN0','cfNP',
+		'cb1','cb2','cb3','cb4','cb5','cb6','cbN0','cbNP',
+		'ca1','ca2','ca3','ca4','ca5','ca6','caN0','caNP',
+		'fricationAmplitude',
+		'pf1','pf2','pf3','pf4','pf5','pf6',
+		'pb1','pb2','pb3','pb4','pb5','pb6',
+		'pa1','pa2','pa3','pa4','pa5','pa6',
+	]]
+
 
 class SpeechPlayer(object):
 
@@ -58,7 +64,16 @@ class VowelChart(object):
 
 	def applyVowel(self,frame,vowel,end=False):
 		data=self._vowels[vowel][0 if not end else 1]
-		for index,frequency in enumerate(data):
-			frame.formantParams[index].frequency=frequency
-			frame.formantParams[index].bandwidth=30
-			frame.formantParams[index].amplitude=1.0
+		frame.cf1=data[0]
+		frame.cb1=60
+		frame.ca1=1
+		frame.cf2=data[1]
+		frame.cb2=90
+		frame.ca2=1
+		frame.cf3=data[2]
+		frame.cb3=120
+		frame.ca3=1
+		frame.ca4=frame.ca5=frame.ca6=frame.caN0=frame.caNP=0
+		frame.fricationAmplitude=0
+		frame.voiceAmplitude=1
+		frame.aspirationAmplitude=0

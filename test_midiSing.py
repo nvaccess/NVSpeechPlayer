@@ -24,11 +24,15 @@ MidiInProc=WINFUNCTYPE(None,HMIDIIN,c_uint,DWORD,DWORD,DWORD)
 
 vowelChart=speechPlayer.VowelChart(os.path.join('vowelcharts',sys.argv[2]))
 
-aaFrame=speechPlayer.Frame()
-aaFrame.breathyness=0
-aaFrame.voiceAmplitude=1.0
-aaFrame.vibratoOffset=0.125
-aaFrame.vibratoSpeed=5.5
+frame=speechPlayer.Frame()
+frame.gain=1.0
+frame.voiceAmplitude=1.0
+frame.dcf1=10
+frame.dcb1=10
+frame.voiceTurbulenceAmplitude=0.75
+frame.glottalOpenQuotient=0.025
+frame.vibratoPitchOffset=0.125
+frame.vibratoSpeed=5.5
 
 class MidiSing(object):
 
@@ -39,7 +43,7 @@ class MidiSing(object):
 		windll.winmm.midiInOpen(byref(self._midiHandle),midiDevice,self._cMidiInProc,None,0x30000)
 		windll.winmm.midiInStart(self._midiHandle)
 		self._lastVowel=sys.argv[3]
-		vowelChart.applyVowel(aaFrame,self._lastVowel)
+		vowelChart.applyVowel(frame,self._lastVowel)
 
 	_noteStack=[]
 	_noteState={}
@@ -72,30 +76,30 @@ class MidiSing(object):
 			numVowels=len(vowels)
 			vowelIndex=int(data2*(numVowels/128.0))
 			vowel=self._lastVowel=vowels[vowelIndex]
-			vowelChart.applyVowel(aaFrame,vowel)
-			self._player.setNewFrame(aaFrame,2000)
+			vowelChart.applyVowel(frame,vowel)
+			self._player.setNewFrame(frame,2000)
 		elif message==0xe0:
 			if data2<64:
-				aaFrame.breathyness=(64-data2)/64.0
+				frame.voiceTurbulenceAmplitude=(64-data2)/64.0
 			else:
-				aaFrame.breathyness=0
-			aaFrame.vibratoSpeed=(5.5+((data2-64)/64.0)) if data2>=64 else 5.5
-			aaFrame.vibratoOffset=(0.125+(((data2-64)/64.0)*0.875)) if data2>=64 else (0.125*(data2/64.0)) 
-			self._player.setNewFrame(aaFrame,2000)
+				frame.voiceTurbulenceAmplitude=0
+			frame.vibratoSpeed=(5.5+((data2-64)/64.0)) if data2>=64 else 5.5
+			frame.vibratoPitchOffset=(0.125+(((data2-64)/64.0)*0.875)) if data2>=64 else (0.125*(data2/64.0)) 
+			self._player.setNewFrame(frame,2000)
 		elif False: #message!=0xfe:
 			print "message: %x, %d, %d"%(message,data1,data2)
 		if noteChange:
 			if data1 is not None:
 				hz=440*(2**((data1-69)/12.0))
-				aaFrame.voicePitch=hz
-				aaFrame.voiceAmplitude=data2/128.0
-				vowelChart.applyVowel(aaFrame,self._lastVowel,False)
-				self._player.setNewFrame(aaFrame,2500 if self._notePlaying else 2000)
+				frame.voicePitch=hz
+				frame.voiceAmplitude=data2/128.0
+				vowelChart.applyVowel(frame,self._lastVowel,False)
+				self._player.setNewFrame(frame,2500 if self._notePlaying else 2000)
 				self._notePlaying=True
 			else:
-				aaFrame.voicePitch=1
-				aaFrame.voiceAmplitude=0
-				self._player.setNewFrame(aaFrame,2000)
+				frame.voicePitch=1
+				frame.voiceAmplitude=0
+				self._player.setNewFrame(frame,2000)
 				self._notePlaying=False
 
 m=MidiSing(int(sys.argv[1]),22050)

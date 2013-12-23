@@ -57,13 +57,24 @@ class VoiceGenerator {
 	private:
 	FrequencyGenerator pitchGen;
 	FrequencyGenerator vibratoGen;
+	NoiseGenerator aspirationGen;
 
 	public:
-	VoiceGenerator(int sr): pitchGen(sr), vibratoGen(sr) {};
+	bool glottisOpen;
+	VoiceGenerator(int sr): pitchGen(sr), vibratoGen(sr), aspirationGen(), glottisOpen(false) {};
 
-	double getNext(double pitch, double vibratoOffset, double vibratoSpeed) {
-		double vibrato=(sin(vibratoGen.getNext(vibratoSpeed)*PITWO)*0.06*vibratoOffset)+1;
-		return atan(pitchGen.getNext(pitch*vibrato)*PITWO);
+	double getNext(const speechPlayer_frame_t* frame) {
+		double vibrato=(sin(vibratoGen.getNext(frame->vibratoSpeed)*PITWO)*0.06*frame->vibratoPitchOffset)+1;
+		double voice=pitchGen.getNext(frame->voicePitch*vibrato);
+		double aspiration=aspirationGen.getNext();
+		double turbulence=aspiration*frame->voiceTurbulenceAmplitude;
+		glottisOpen=voice>=frame->glottalOpenQuotient;
+		if(glottisOpen) {
+			turbulence*=0.1;
+		}
+		voice=(voice*2)-1;
+		voice+=turbulence;
+		return (voice*frame->voiceAmplitude)+(aspiration*frame->aspirationAmplitude);
 	}
 
 };
@@ -82,7 +93,7 @@ class Resonator {
 	double p1, p2;
 
 	public:
-	Resonator(int sampleRate, bool anti) {
+	Resonator(int sampleRate, bool anti=false) {
 		this->sampleRate=sampleRate;
 		this->anti=anti;
 		this->setOnce=false;
@@ -91,7 +102,6 @@ class Resonator {
 	}
 
 	void setParams(double frequency, double bandwidth) {
-		bandwidth=max(bandwidth,10);
 		if(!setOnce||(frequency!=this->frequency)||(bandwidth!=this->bandwidth)) {
 			this->frequency=frequency;
 			this->bandwidth=bandwidth;
@@ -108,12 +118,62 @@ class Resonator {
 		this->setOnce=true;
 	}
 
-	double resonate(double in) {
-		if(!setOnce) return in;
+	double resonate(double in, double frequency, double bandwidth) {
+		setParams(frequency,bandwidth);
 		double out=a*in+b*p1+c*p2;
 		p2=p1;
-		p1=out;
+		p1=anti?in:out;
 		return out;
+	}
+
+};
+
+class CascadeFormantGenerator { 
+	private:
+	int sampleRate;
+	Resonator r1, r2, r3, r4, r5, r6, rN0, rNP;
+
+	public:
+	CascadeFormantGenerator(int sr): sampleRate(sr), r1(sr), r2(sr), r3(sr), r4(sr), r5(sr), r6(sr), rN0(sr,true), rNP(sr) {};
+
+	double getNext(const speechPlayer_frame_t* frame, bool glottisOpen, double input) {
+		input/=2.0;
+		double output=input;
+		if(glottisOpen) {
+			output=calculateValueAtFadePosition(output,r1.resonate(output,frame->cf1+frame->dcf1,frame->cb1+frame->dcb1),frame->ca1);
+		} else {
+			output=calculateValueAtFadePosition(output,r1.resonate(output,frame->cf1,frame->cb1),frame->ca1);
+		}
+		output=calculateValueAtFadePosition(output,r2.resonate(output,frame->cf2,frame->cb2),frame->ca2);
+		output=calculateValueAtFadePosition(output,r3.resonate(output,frame->cf3,frame->cb3),frame->ca3);
+		output=calculateValueAtFadePosition(output,r4.resonate(output,frame->cf4,frame->cb4),frame->ca4);
+		output=calculateValueAtFadePosition(output,r5.resonate(output,frame->cf5,frame->cb5),frame->ca5);
+		output=calculateValueAtFadePosition(output,r6.resonate(output,frame->cf6,frame->cb6),frame->ca6);
+		output=calculateValueAtFadePosition(output,rN0.resonate(output,frame->cfN0,frame->cbN0),frame->caN0);
+		output=calculateValueAtFadePosition(output,rNP.resonate(output,frame->cfNP,frame->cbNP),frame->caNP);
+		return output;
+	}
+
+};
+
+class ParallelFormantGenerator { 
+	private:
+	int sampleRate;
+	Resonator r1, r2, r3, r4, r5, r6;
+
+	public:
+	ParallelFormantGenerator(int sr): sampleRate(sr), r1(sr), r2(sr), r3(sr), r4(sr), r5(sr), r6(sr) {};
+
+	double getNext(const speechPlayer_frame_t* frame, double input) {
+		input/=2.0;
+		double output=input;
+		output+=calculateValueAtFadePosition(input,r1.resonate(input,frame->pf1,frame->pb1)-input,frame->pa1);
+		output+=calculateValueAtFadePosition(input,r2.resonate(input,frame->pf2,frame->pb2)-input,frame->pa2);
+		output+=calculateValueAtFadePosition(input,r3.resonate(input,frame->pf3,frame->pb3)-input,frame->pa3);
+		output+=calculateValueAtFadePosition(input,r4.resonate(input,frame->pf4,frame->pb4)-input,frame->pa4);
+		output+=calculateValueAtFadePosition(input,r5.resonate(input,frame->pf5,frame->pb5)-input,frame->pa5);
+		output+=calculateValueAtFadePosition(input,r6.resonate(input,frame->pf6,frame->pb6)-input,frame->pa6);
+		return output;
 	}
 
 };
@@ -122,17 +182,13 @@ class SpeechWaveGeneratorImpl: public SpeechWaveGenerator {
 	private:
 	int sampleRate;
 	VoiceGenerator voiceGenerator;
-	NoiseGenerator breathGenerator;
+	NoiseGenerator fricGenerator;
+	CascadeFormantGenerator cascade;
+	ParallelFormantGenerator parallel;
 	FrameManager* frameManager;
-	Resonator* resonators[SPEECHPLAYER_FRAME_NUMFORMANTS]; 
 
 	public:
-	SpeechWaveGeneratorImpl(int sr): sampleRate(sr), voiceGenerator(sr), breathGenerator(), frameManager(NULL) {
-		for(int i=0;i<SPEECHPLAYER_FRAME_NUMFORMANTS;++i) resonators[i]=new Resonator(sr,false);
-	}
-
-	~SpeechWaveGeneratorImpl() {
-		for(int i=0;i<SPEECHPLAYER_FRAME_NUMFORMANTS;++i) delete resonators[i]; 
+	SpeechWaveGeneratorImpl(int sr): sampleRate(sr), voiceGenerator(sr), fricGenerator(), cascade(sr), parallel(sr), frameManager(NULL) {
 	}
 
 	void generate(const int sampleCount, sample* sampleBuf) {
@@ -140,15 +196,16 @@ class SpeechWaveGeneratorImpl: public SpeechWaveGenerator {
 		double val=0;
 		for(int i=0;i<sampleCount;++i) {
 			const speechPlayer_frame_t* frame=frameManager->getCurrentFrame();
-			double voice=voiceGenerator.getNext(frame->voicePitch,frame->vibratoOffset,frame->vibratoSpeed);
-			double breath=breathGenerator.getNext()*0.5;
-			double mix=calculateValueAtFadePosition(voice,breath,frame->breathyness)*frame->voiceAmplitude;
-			for(int f=0;f<SPEECHPLAYER_FRAME_NUMFORMANTS;++f) {
-				resonators[f]->setParams(frame->formantParams[f].frequency,frame->formantParams[f].bandwidth);
-				float resVal=resonators[f]->resonate(mix);
-				mix=calculateValueAtFadePosition(mix,resVal,frame->formantParams[f].amplitude);
+			if(frame) {
+				double voice=voiceGenerator.getNext(frame);
+				double cascadeOut=cascade.getNext(frame,voiceGenerator.glottisOpen,voice);
+				double fric=fricGenerator.getNext()*frame->fricationAmplitude;
+				double parallelOut=parallel.getNext(frame,fric);
+				double out=(cascadeOut+parallelOut)*frame->gain;
+				sampleBuf[i].value=max(min(out*4000,32000),-32000);
+			} else {
+				sampleBuf[i].value=0;
 			}
-			sampleBuf[i].value=max(min(mix*4000,32000),-32000);
 		}
 	}
 

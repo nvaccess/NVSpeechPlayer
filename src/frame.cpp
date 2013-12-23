@@ -16,6 +16,7 @@ http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
 class FrameManagerImpl: public FrameManager {
 	private:
 	LockableObject frameLock;
+	bool hasFrame;
 	bool newFrameEmpty;
 	int frameFadeCounter;
 	int frameFadeCount;
@@ -25,27 +26,21 @@ class FrameManagerImpl: public FrameManager {
 
 	void updateCurrentFrame() {
 		if(frameFadeCount==-1) return;
-		else if(frameFadeCounter>=frameFadeCount) {
+		else if(frameFadeCounter>frameFadeCount) {
 			frameFadeCount=-1;
 			return;
 		}
 		double curFadeRatio=(double)frameFadeCounter/frameFadeCount;
 		++frameFadeCounter;
-		curFrame->voiceAmplitude=calculateValueAtFadePosition(oldFrame->voiceAmplitude,newFrame->voiceAmplitude,curFadeRatio);
-		curFrame->voicePitch=calculateValueAtFadePosition(oldFrame->voicePitch,newFrame->voicePitch,curFadeRatio); //curFadeRatio);
-		curFrame->breathyness=calculateValueAtFadePosition(oldFrame->breathyness,newFrame->breathyness,curFadeRatio);
-		curFrame->vibratoOffset=calculateValueAtFadePosition(oldFrame->vibratoOffset,newFrame->vibratoOffset,curFadeRatio);
-		curFrame->vibratoSpeed=calculateValueAtFadePosition(oldFrame->vibratoSpeed,newFrame->vibratoSpeed,curFadeRatio);
-		for(int i=0;i<SPEECHPLAYER_FRAME_NUMFORMANTS;++i) {
-			curFrame->formantParams[i].frequency=calculateValueAtFadePosition(oldFrame->formantParams[i].frequency,newFrame->formantParams[i].frequency,curFadeRatio);
-			curFrame->formantParams[i].bandwidth=calculateValueAtFadePosition(oldFrame->formantParams[i].bandwidth,newFrame->formantParams[i].bandwidth,1.0); //curFadeRatio);
-			curFrame->formantParams[i].amplitude=calculateValueAtFadePosition(oldFrame->formantParams[i].amplitude,newFrame->formantParams[i].amplitude,curFadeRatio);
+		for(int i=0;i<speechPlayer_frame_numParams;++i) {
+			((speechPlayer_frameParam_t*)curFrame)[i]=calculateValueAtFadePosition(((speechPlayer_frameParam_t*)oldFrame)[i],((speechPlayer_frameParam_t*)newFrame)[i],curFadeRatio);
 		}
 	}
 
 	public:
 
 	FrameManagerImpl() {
+		hasFrame=false;
 		oldFrame=new speechPlayer_frame_t();
 		curFrame=new speechPlayer_frame_t();
 		newFrame=new speechPlayer_frame_t();
@@ -54,11 +49,12 @@ class FrameManagerImpl: public FrameManager {
 
 	void setNewFrame(speechPlayer_frame_t* frame, int fadeCount) {
 		frameLock.acquire();
+		hasFrame=(frame!=NULL);
 		if(frame) {
 			memcpy(newFrame,frame,sizeof(speechPlayer_frame_t));
 			newFrameEmpty=false;
 		} else {
-			memset(newFrame,0,sizeof(speechPlayer_frame_t));
+			for(int i=0;i<speechPlayer_frame_numParams;++i) ((speechPlayer_frameParam_t*)newFrame)[i]=0; 
 			newFrameEmpty=true;
 		}
 		speechPlayer_frame_t* tempFrame=oldFrame;
@@ -71,6 +67,10 @@ class FrameManagerImpl: public FrameManager {
 
 	const speechPlayer_frame_t* const getCurrentFrame() {
 		frameLock.acquire();
+		if(!hasFrame) {
+			frameLock.release();
+			return NULL;
+		}
 		updateCurrentFrame();
 		frameLock.release();
 		return curFrame;
