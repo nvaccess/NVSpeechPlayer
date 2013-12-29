@@ -15,6 +15,8 @@ import os
 from ctypes import *
 from ctypes.wintypes import *
 import speechPlayer
+import ipa
+phonemeList=list(ipa.iterPhonemes())
 
 MIN_DATA=0x3c3
 
@@ -22,15 +24,12 @@ HMIDIIN=HANDLE
 
 MidiInProc=WINFUNCTYPE(None,HMIDIIN,c_uint,DWORD,DWORD,DWORD)
 
-vowelChart=speechPlayer.VowelChart(os.path.join('vowelcharts',sys.argv[2]))
-
 frame=speechPlayer.Frame()
 frame.gain=1.0
 frame.voiceAmplitude=1.0
 frame.dcf1=10
 frame.dcb1=10
-frame.voiceTurbulenceAmplitude=0.75
-frame.glottalOpenQuotient=0.025
+frame.voiceTurbulenceAmplitude=1
 frame.vibratoPitchOffset=0.125
 frame.vibratoSpeed=5.5
 
@@ -42,8 +41,8 @@ class MidiSing(object):
 		self._cMidiInProc=MidiInProc(self.midiInProc)
 		windll.winmm.midiInOpen(byref(self._midiHandle),midiDevice,self._cMidiInProc,None,0x30000)
 		windll.winmm.midiInStart(self._midiHandle)
-		self._lastVowel=sys.argv[3]
-		vowelChart.applyVowel(frame,self._lastVowel)
+		self._lastPhoneme=sys.argv[2]
+		ipa.setFrame(frame,self._lastPhoneme)
 
 	_noteStack=[]
 	_noteState={}
@@ -72,15 +71,14 @@ class MidiSing(object):
 				data1=None
 			noteChange=True
 		elif message==0xb0:
-			vowels=vowelChart._vowels.keys()
-			numVowels=len(vowels)
-			vowelIndex=int(data2*(numVowels/128.0))
-			vowel=self._lastVowel=vowels[vowelIndex]
-			vowelChart.applyVowel(frame,vowel)
+			numPhonemes=len(phonemeList)
+			phonemeIndex=int(data2*(numPhonemes/128.0))
+			phoneme=self._lastPhoneme=phonemeList[phonemeIndex]
+			ipa.setFrame(frame,phoneme)
 			self._player.setNewFrame(frame,2000)
 		elif message==0xe0:
 			if data2<64:
-				frame.voiceTurbulenceAmplitude=(64-data2)/64.0
+				frame.glottalOpenQuotient=0.1*((64-data2)/64.0)
 			else:
 				frame.voiceTurbulenceAmplitude=0
 			frame.vibratoSpeed=(5.5+((data2-64)/64.0)) if data2>=64 else 5.5
@@ -93,7 +91,7 @@ class MidiSing(object):
 				hz=440*(2**((data1-69)/12.0))
 				frame.voicePitch=hz
 				frame.voiceAmplitude=data2/128.0
-				vowelChart.applyVowel(frame,self._lastVowel,False)
+				ipa.setFrame(frame,self._lastPhoneme)
 				self._player.setNewFrame(frame,2500 if self._notePlaying else 2000)
 				self._notePlaying=True
 			else:

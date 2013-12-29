@@ -10,76 +10,124 @@ This license can be found at:
 http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
 */
 
+#include <queue>
 #include "utils.h"
 #include "frame.h"
+
+using namespace std;
+
+struct frameRequest_t {
+	int minNumSamples;
+	int numFadeSamples;
+	bool NULLFrame;
+	speechPlayer_frame_t frame;
+	double voicePitchInc; 
+};
 
 class FrameManagerImpl: public FrameManager {
 	private:
 	LockableObject frameLock;
-	bool hasFrame;
-	bool newFrameEmpty;
-	int frameFadeCounter;
-	int frameFadeCount;
-	speechPlayer_frame_t* oldFrame;
-	speechPlayer_frame_t* curFrame;
-	speechPlayer_frame_t* newFrame;
+	queue<frameRequest_t*> frameRequestQueue;
+	frameRequest_t* oldFrameRequest;
+	frameRequest_t* newFrameRequest;
+	speechPlayer_frame_t curFrame;
+	int sampleCounter;
+	bool canRunQueue;
 
 	void updateCurrentFrame() {
-		if(frameFadeCount==-1) return;
-		else if(frameFadeCounter>frameFadeCount) {
-			frameFadeCount=-1;
-			return;
-		}
-		double curFadeRatio=(double)frameFadeCounter/frameFadeCount;
-		++frameFadeCounter;
-		for(int i=0;i<speechPlayer_frame_numParams;++i) {
-			((speechPlayer_frameParam_t*)curFrame)[i]=calculateValueAtFadePosition(((speechPlayer_frameParam_t*)oldFrame)[i],((speechPlayer_frameParam_t*)newFrame)[i],curFadeRatio);
+		if(!canRunQueue) return;
+		sampleCounter++;
+		if(newFrameRequest) {
+			if(sampleCounter>(newFrameRequest->numFadeSamples)) {
+				delete oldFrameRequest;
+				oldFrameRequest=newFrameRequest;
+				newFrameRequest=NULL;
+			} else {
+				double curFadeRatio=(double)sampleCounter/(newFrameRequest->numFadeSamples);
+				for(int i=0;i<speechPlayer_frame_numParams;++i) {
+					((speechPlayer_frameParam_t*)&curFrame)[i]=calculateValueAtFadePosition(((speechPlayer_frameParam_t*)&(oldFrameRequest->frame))[i],((speechPlayer_frameParam_t*)&(newFrameRequest->frame))[i],curFadeRatio);
+				}
+			}
+		} else if(sampleCounter>(oldFrameRequest->minNumSamples)) {
+			if(!frameRequestQueue.empty()) {
+				newFrameRequest=frameRequestQueue.front();
+				frameRequestQueue.pop();
+				if(newFrameRequest->NULLFrame) {
+					if(false) { //oldFrameRequest->NULLFrame) {
+						delete newFrameRequest;
+						newFrameRequest=NULL;
+					} else {
+						double finalVoicePitch=newFrameRequest->frame.voicePitch;
+						memcpy(&(newFrameRequest->frame),&(oldFrameRequest->frame),sizeof(speechPlayer_frame_t));
+						newFrameRequest->frame.preFormantGain=0;
+						newFrameRequest->frame.voicePitch=finalVoicePitch;
+					}
+				} else if(oldFrameRequest->NULLFrame) {
+					memcpy(&(oldFrameRequest->frame),&(newFrameRequest->frame),sizeof(speechPlayer_frame_t));
+					oldFrameRequest->frame.preFormantGain=0;
+				}
+				if(newFrameRequest) {
+					oldFrameRequest->frame.voicePitch=curFrame.voicePitch;
+					sampleCounter=0;
+				}
+			} else {
+				canRunQueue=false;
+			}
+		} else {
+			curFrame.voicePitch+=oldFrameRequest->voicePitchInc;
 		}
 	}
+
 
 	public:
 
-	FrameManagerImpl() {
-		hasFrame=false;
-		oldFrame=new speechPlayer_frame_t();
-		curFrame=new speechPlayer_frame_t();
-		newFrame=new speechPlayer_frame_t();
-		newFrameEmpty=true;
+	FrameManagerImpl(): curFrame(), newFrameRequest(NULL), canRunQueue(false) {
+		oldFrameRequest=new frameRequest_t();
+		oldFrameRequest->NULLFrame=true;
 	}
 
-	void setNewFrame(speechPlayer_frame_t* frame, int fadeCount) {
+	void queueFrame(speechPlayer_frame_t* frame, int minNumSamples, int numFadeSamples, double finalVoicePitch, bool purgeQueue) {
 		frameLock.acquire();
-		hasFrame=(frame!=NULL);
+		frameRequest_t* frameRequest=new frameRequest_t;
+		frameRequest->minNumSamples=minNumSamples;
+		frameRequest->numFadeSamples=numFadeSamples;
 		if(frame) {
-			memcpy(newFrame,frame,sizeof(speechPlayer_frame_t));
-			newFrameEmpty=false;
+			frameRequest->NULLFrame=false;
+			memcpy(&(frameRequest->frame),frame,sizeof(speechPlayer_frame_t));
 		} else {
-			for(int i=0;i<speechPlayer_frame_numParams;++i) ((speechPlayer_frameParam_t*)newFrame)[i]=0; 
-			newFrameEmpty=true;
+			frameRequest->NULLFrame=true;
+			frameRequest->frame.voicePitch=finalVoicePitch;
 		}
-		speechPlayer_frame_t* tempFrame=oldFrame;
-		oldFrame=curFrame;
-		curFrame=tempFrame;
-		frameFadeCount=fadeCount;
-		frameFadeCounter=0;
+		frameRequest->voicePitchInc=0;
+		if(purgeQueue) {
+			for(;!frameRequestQueue.empty();frameRequestQueue.pop()) delete frameRequestQueue.front();
+			sampleCounter=oldFrameRequest->minNumSamples;
+			if(newFrameRequest) {
+				oldFrameRequest->NULLFrame=newFrameRequest->NULLFrame;
+				memcpy(&(oldFrameRequest->frame),&curFrame,sizeof(speechPlayer_frame_t));
+				delete newFrameRequest;
+				newFrameRequest=NULL;
+			}
+		} else if(!frameRequestQueue.empty()) {
+			frameRequest_t* prevFrameRequest=frameRequestQueue.back();
+			int numSamples=prevFrameRequest->minNumSamples+frameRequest->numFadeSamples;
+			prevFrameRequest->voicePitchInc=(frameRequest->frame.voicePitch-prevFrameRequest->frame.voicePitch)/numSamples;
+		}
+		frameRequestQueue.push(frameRequest);
+		if(!frame&&!purgeQueue) canRunQueue=true;
 		frameLock.release();
 	}
 
 	const speechPlayer_frame_t* const getCurrentFrame() {
 		frameLock.acquire();
-		if(!hasFrame) {
-			frameLock.release();
-			return NULL;
-		}
 		updateCurrentFrame();
 		frameLock.release();
-		return curFrame;
+		return &curFrame;
 	}
 
 	~FrameManagerImpl() {
-		delete oldFrame;
-		delete curFrame;
-		delete newFrame;
+		if(oldFrameRequest) delete oldFrameRequest;
+		if(newFrameRequest) delete newFrameRequest;
 	}
 
 };

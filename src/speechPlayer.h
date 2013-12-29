@@ -22,7 +22,7 @@ extern "C" {
 typedef void* speechPlayer_handle_t;
 
 speechPlayer_handle_t speechPlayer_initialize(int sampleRate);
-void speechPlayer_setNewFrame(speechPlayer_handle_t playerHandle, speechPlayer_frame_t* frame);
+void speechPlayer_queueFrame(speechPlayer_handle_t playerHandle, speechPlayer_frame_t* frame,double minFrameDuration, double fadeDuration, double finalVoicePitch);
 void speechPlayer_terminate(speechPlayer_handle_t playerHandle);
 
 #ifdef __cplusplus

@@ -16,14 +16,13 @@ speechPlayer_frameParam_t=c_double
 
 class Frame(Structure):
 	_fields_=[(name,speechPlayer_frameParam_t) for name in [
-		'gain',
 		'voicePitch',
 		'vibratoPitchOffset',
 		'vibratoSpeed',
-		'voiceAmplitude',
 		'voiceTurbulenceAmplitude',
 		'glottalOpenQuotient',
 		'dcf1','dcb1',
+		'voiceAmplitude',
 		'aspirationAmplitude',
 		'cf1','cf2','cf3','cf4','cf5','cf6','cfN0','cfNP',
 		'cb1','cb2','cb3','cb4','cb5','cb6','cbN0','cbNP',
@@ -32,6 +31,9 @@ class Frame(Structure):
 		'pf1','pf2','pf3','pf4','pf5','pf6',
 		'pb1','pb2','pb3','pb4','pb5','pb6',
 		'pa1','pa2','pa3','pa4','pa5','pa6',
+		'parallelBypass',
+		'preFormantGain',
+		'outputGain',
 	]]
 
 
@@ -41,9 +43,9 @@ class SpeechPlayer(object):
 		self._dll=cdll.speechPlayer
 		self._speechHandle=self._dll.speechPlayer_initialize(sampleRate)
 
-	def setNewFrame(self,frame,count):
+	def queueFrame(self,frame,minFrameDuration,fadeDuration,finalVoicePitch=0.0,purgeQueue=False):
 		frame=byref(frame) if frame else None
-		self._dll.speechPlayer_setNewFrame(self._speechHandle,frame,count)
+		self._dll.speechPlayer_queueFrame(self._speechHandle,frame,c_double(minFrameDuration),c_double(fadeDuration),c_double(finalVoicePitch),purgeQueue)
 
 	def __del__(self):
 		self._dll.speechPlayer_terminate(self._speechHandle)

@@ -10,31 +10,17 @@
 # http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
 ####
 
-import itertools
+import codecs
 import time
-import os
 import sys
 import speechPlayer
 import ipa
 
 player=speechPlayer.SpeechPlayer(22050)
-frame=speechPlayer.Frame()
-frame.outputGain=1.0
-frame.preFormantGain=1.0
-frame.voiceAmplitude=1.0
-vowels=list(ipa.iterPhonemes(isVowel=True))
-for firstVowel,lastVowel in itertools.product(vowels,vowels): 
-	player.queueFrame(None,0,0,purgeQueue=True)
-	frame.voicePitch=50
-	print u"%r %r"%(firstVowel,lastVowel) 
-	ipa.setFrame(frame,firstVowel)
-	player.queueFrame(frame,50,50)
-	frame.voicePitch=200
-	ipa.setFrame(frame,lastVowel)
-	player.queueFrame(frame,500,500)
-	frame.voicePitch=150
-	player.queueFrame(frame,250,250,finalVoicePitch=75)
-	player.queueFrame(None,50,50)
-	raw_input()
-del player
-
+text=codecs.open('sampleIpa.txt','r','utf8').read()
+for line in text.splitlines():
+	for chunk in line.strip().split():
+		for args in ipa.generateFramesAndTiming(chunk,basePitch=160):
+			player.queueFrame(*args)
+	player.queueFrame(None,150,0)
+time.sleep(300)

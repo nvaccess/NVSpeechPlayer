@@ -1,4 +1,4 @@
 EXPORTS
 	speechPlayer_initialize
-	speechPlayer_setNewFrame
+	speechPlayer_queueFrame
 	speechPlayer_terminate

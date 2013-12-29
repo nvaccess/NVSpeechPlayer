@@ -22,7 +22,7 @@ class Player_winmm: public Player {
 	HANDLE winmmThreadHandle;
 	static DWORD WINAPI winmmThreadFunc(LPVOID data);
 	bool winmmThreadKeepAlive;
-	static const int numSamplesPerBlock=256;
+	static const int numSamplesPerBlock=768;
 	static const int numBlocks=4;
 	typedef struct {
 		WAVEHDR waveHeader;

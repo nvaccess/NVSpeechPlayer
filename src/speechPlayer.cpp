@@ -16,6 +16,7 @@ http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
 #include "speechPlayer.h"
 
 typedef struct {
+	int sampleRate;
 	FrameManager* frameManager;
 	SpeechWaveGenerator* waveGenerator;
 	Player* player;
@@ -23,6 +24,7 @@ typedef struct {
 
 speechPlayer_handle_t speechPlayer_initialize(int sampleRate) {
 	speechPlayer_handleInfo_t* playerHandleInfo=new speechPlayer_handleInfo_t;
+	playerHandleInfo->sampleRate=sampleRate;
 	playerHandleInfo->frameManager=FrameManager::create();
 	playerHandleInfo->waveGenerator=SpeechWaveGenerator::create(sampleRate);
 	playerHandleInfo->waveGenerator->setFrameManager(playerHandleInfo->frameManager);
@@ -31,8 +33,9 @@ speechPlayer_handle_t speechPlayer_initialize(int sampleRate) {
 	return (speechPlayer_handle_t)playerHandleInfo;
 }
 
-void speechPlayer_setNewFrame(speechPlayer_handle_t playerHandle, speechPlayer_frame_t* framePtr, int fadeCount) { 
-	((speechPlayer_handleInfo_t*)playerHandle)->frameManager->setNewFrame(framePtr,fadeCount);
+void speechPlayer_queueFrame(speechPlayer_handle_t playerHandle, speechPlayer_frame_t* framePtr, double minFrameDuration, double fadeDuration, double finalVoicePitch, bool purgeQueue) { 
+	speechPlayer_handleInfo_t* playerHandleInfo=(speechPlayer_handleInfo_t*)playerHandle;
+	playerHandleInfo->frameManager->queueFrame(framePtr,(playerHandleInfo->sampleRate*minFrameDuration)/1000.0,max((playerHandleInfo->sampleRate*fadeDuration)/1000.0,1),finalVoicePitch,purgeQueue);
 }
 
 void speechPlayer_terminate(speechPlayer_handle_t playerHandle) {
