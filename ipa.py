@@ -1,7 +1,10 @@
-﻿import codecs
+﻿import os
+import codecs
 import speechPlayer
 
-data=eval(codecs.open('data.py','r','utf8').read(),None,None)
+dataPath=os.path.join(os.path.dirname(__file__),'data.py')
+
+data=eval(codecs.open(dataPath,'r','utf8').read(),None,None)
 
 def iterPhonemes(**kwargs):
 	for k,v in data.iteritems():

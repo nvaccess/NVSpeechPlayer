@@ -11,6 +11,7 @@
 ####
 
 from ctypes import *
+import os
 
 speechPlayer_frameParam_t=c_double
 
@@ -36,11 +37,12 @@ class Frame(Structure):
 		'outputGain',
 	]]
 
+dllPath=os.path.join(os.path.dirname(__file__),'speechPlayer.dll')
 
 class SpeechPlayer(object):
 
 	def __init__(self,sampleRate):
-		self._dll=cdll.speechPlayer
+		self._dll=cdll.LoadLibrary(dllPath)
 		self._speechHandle=self._dll.speechPlayer_initialize(sampleRate)
 
 	def queueFrame(self,frame,minFrameDuration,fadeDuration,finalVoicePitch=0.0,purgeQueue=False):
