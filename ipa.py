@@ -55,8 +55,10 @@ def generateFramesAndTiming(ipaText,basePitch=1):
 	pitchDec=100.0/len(phonemeList)
 	for phoneme in phonemeList:
 		frame.voicePitch=basePitch
-		frameDuration=100/speed
+		frameDuration=80/speed
 		fadeDuration=40/speed
+		if phoneme.get('isVowel'):
+			frameDuration*=1.25
 		if phoneme.get('lengthened'):
 			frameDuration*=1.5
 		if phoneme.get('isStop'):
