@@ -15,14 +15,12 @@ for k in sorted(oldIpaData.keys()):
 	item['isVoiced']=v['voice']
 	item['voiceAmplitude']=1.0 if v['voice'] else 0 
 	item['aspirationAmplitude']=0.75 if not v['voice'] and v['voicing-linear-gain']>0 else 0.0 
-	item['cf1'],item['cf2'],item['cf3'],item['cf4'],item['cf5'],item['cf6']=[x*1.04 for x in v['freq (1-6)']]
-	item['cf1']*=1.1
+	item['cf1'],item['cf2'],item['cf3'],item['cf4'],item['cf5'],item['cf6']=v['freq (1-6)']
 	item['cfNP']=v['freq-nasal-pole']
 	item['cfN0']=v['freq-nasal-zero']
-	item['cb1'],item['cb2'],item['cb3'],item['cb4'],item['cb5'],item['cb6']=[x*1.1 for x in v['bwidth (1-6)']]
+	item['cb1'],item['cb2'],item['cb3'],item['cb4'],item['cb5'],item['cb6']=v['bwidth (1-6)']
 	item['cbNP']=v['bwidth-nasal-pole']
 	item['cbN0']=v['bwidth-nasal-zero']
-	item['cb1']*=1.1
 	item['ca1']=item['ca2']=item['ca3']=item['ca4']=item['ca5']=item['ca6']=1.0
 	item['caNP']=1.0 if v['nasal'] else 0
 	item['pf1'],item['pf2'],item['pf3'],item['pf4'],item['pf5'],item['pf6']=v['freq (1-6)']
@@ -33,11 +31,30 @@ for k in sorted(oldIpaData.keys()):
 	if v['formant-parallel-gain']==0:
 		item['fricationAmplitude']=0
 	else:
-		item['fricationAmplitude']=0.3 if v['voicing-linear-gain']>0 else 0.7 
+		item['fricationAmplitude']=0.5 if v['voicing-linear-gain']>0 else 1.0 
 
 data['h']=dict(copyAdjacent=True,isStop=False,isVoiced=False,voiceAmplitude=0,aspirationAmplitude=1)
-data[u'ɪ']=data[u'I']
 data[u'ɹ']['cf3']=1350
+
+aliases={
+	u'ɐ':u'ʌ',
+	u'ɜ':u'ə',
+	u'ɪ':'I',
+	u'ɡ':'g',
+}
+for a,b in aliases.iteritems():
+	data[a]=data[b]
+
+def createMergedVowel(a,b,ratio):
+	a=data[a]
+	b=data[b]
+	m=a.copy()
+	for x in ('cf1','cf2','cf3','cf4','cf5','cf6','cfNP','cfN0','cb1','cb2','cb3','cb4','cb5','cb6','cbNP','cbN0'):
+		m[x]=(a[x]*(1-ratio))+(b[x]*ratio)
+	return m
+
+data['a']=createMergedVowel(u'ɑ',u'æ',0.4)
+data[u'ɒ']=createMergedVowel(u'ɑ',u'o',0.5)
 
 f=codecs.open('data.py','w','utf8')
 f.write(u'{\n')

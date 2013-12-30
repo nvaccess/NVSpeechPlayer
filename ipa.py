@@ -17,13 +17,23 @@ def applyPhonemeToFrame(frame,phoneme):
 	for k,v in phoneme.iteritems():
 		setattr(frame,k,v)
 
-speed=1
+speed=1.1
 
 def generateFramesAndTiming(ipaText,basePitch=1):
 	frame=speechPlayer.Frame()
 	frame.preFormantGain=2.0
 	frame.voicePitch=basePitch
-	phonemeList=[data[i] for i in ipaText if i in data]
+	phonemeList=[]
+	textLength=len(ipaText)
+	lastIndex=textLength-1
+	for index in xrange(textLength):
+		phoneme=data.get(ipaText[index])
+		if not phoneme: continue
+		if index<lastIndex and ipaText[index+1]==u'ː':
+			phoneme['lengthened']=True
+		phonemeList.append(phoneme)
+	if len(phonemeList)==0:
+		return
 	aspirationIndexes=[]
 	for index,phoneme in enumerate(phonemeList):
 		nextPhoneme=phonemeList[index+1] if (index+1)<len(phonemeList) else {}
@@ -47,14 +57,16 @@ def generateFramesAndTiming(ipaText,basePitch=1):
 		frame.voicePitch=basePitch
 		frameDuration=100/speed
 		fadeDuration=40/speed
+		if phoneme.get('lengthened'):
+			frameDuration*=1.5
 		if phoneme.get('isStop'):
 			yield None,40,40
-			frameDuration=5/speed
+			frameDuration=15
 			fadeDuration=0.001
 		elif phoneme.get('postStopAspiration'):
-			frameDuration=40/speed
-			fadeDuration=20/speed
+			frameDuration=40
+			fadeDuration=20
 		applyPhonemeToFrame(frame,phoneme)
 		yield frame,frameDuration,fadeDuration
 		basePitch-=pitchDec
-	yield None,30/speed,30/speed
+	yield None,5/speed,5/speed

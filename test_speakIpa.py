@@ -1,4 +1,4 @@
-####
+﻿####
 # Copyright 2013 Michael Curran <mick@nvaccess.org>.
     # This program is free software: you can redistribute it and/or modify
     # it under the terms of the GNU Lesser General Public License version 2.1, as published by
@@ -17,7 +17,8 @@ import speechPlayer
 import ipa
 
 player=speechPlayer.SpeechPlayer(22050)
-text=codecs.open('sampleIpa.txt','r','utf8').read()
+text=codecs.open(sys.argv[1],'r','utf8').read()
+#text=text.replace(u'a',u'æ')
 for line in text.splitlines():
 	for chunk in line.strip().split():
 		for args in ipa.generateFramesAndTiming(chunk,basePitch=160):
