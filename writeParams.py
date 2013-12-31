@@ -33,7 +33,7 @@ for k in sorted(oldIpaData.keys()):
 	else:
 		item['fricationAmplitude']=0.5 if v['voicing-linear-gain']>0 else 1.0 
 
-data['h']=dict(copyAdjacent=True,isStop=False,isVoiced=False,voiceAmplitude=0,aspirationAmplitude=1)
+data['h']=dict(copyAdjacent=True,isStop=False,isVoiced=False,voiceAmplitude=0,aspirationAmplitude=1,fricationAmplitude=0)
 data[u'ɹ']['cf3']=1350
 
 aliases={

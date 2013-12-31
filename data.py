@@ -365,9 +365,10 @@
 	},
 	u'h':{
 		'copyAdjacent':True,
+		'fricationAmplitude':0,
+		'isStop':False,
 		'aspirationAmplitude':1,
 		'isVoiced':False,
-		'isStop':False,
 		'voiceAmplitude':0,
 	},
 	u'i':{
