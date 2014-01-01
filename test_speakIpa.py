@@ -16,12 +16,12 @@ import sys
 import speechPlayer
 import ipa
 
-player=speechPlayer.SpeechPlayer(22050)
+player=speechPlayer.SpeechPlayer(16000)
+time.sleep(0.05)
 text=codecs.open(sys.argv[1],'r','utf8').read()
 #text=text.replace(u'a',u'æ')
 for line in text.splitlines():
-	for chunk in line.strip().split():
-		for args in ipa.generateFramesAndTiming(chunk,basePitch=160):
-			player.queueFrame(*args)
+	for args in ipa.generateFramesAndTiming(line.strip(),startPitch=130,endPitch=70):
+		player.queueFrame(*args)
 	player.queueFrame(None,150,0)
 time.sleep(300)

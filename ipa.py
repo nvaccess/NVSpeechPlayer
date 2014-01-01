@@ -20,33 +20,64 @@ def applyPhonemeToFrame(frame,phoneme):
 	for k,v in phoneme.iteritems():
 		setattr(frame,k,v)
 
-speed=1.1
+speed=1
 
-def generateFramesAndTiming(ipaText,basePitch=1):
+def generateFramesAndTiming(ipaText,startPitch=1,endPitch=1):
 	frame=speechPlayer.Frame()
 	frame.preFormantGain=2.0
-	frame.voicePitch=basePitch
+	frame.vibratoPitchOffset=0.4
+	frame.vibratoSpeed=4
 	phonemeList=[]
 	textLength=len(ipaText)
 	lastIndex=textLength-1
+	lastPhoneme=None
+	# Collect phoneme info for each IPA character, assigning diacritics (lengthened, stress) to the last real phoneme
+	stress=0
+	tied=False
+	newWord=True
 	for index in xrange(textLength):
-		phoneme=data.get(ipaText[index])
+		char=ipaText[index]
+		if char==' ':
+			newWord=True
+		elif char==u'ː':
+			if lastPhoneme is not None: lastPhoneme['lengthened']=True
+		elif char==u'ˈ':
+			stress=1
+		elif char==u'ˌ':
+			stress=2
+		elif char==u'͡':
+			if lastPhoneme is not None:
+				lastPhoneme['tiedTo']=True
+				tied=True
+		phoneme=data.get(char)
 		if not phoneme: continue
-		if index<lastIndex and ipaText[index+1]==u'ː':
-			phoneme['lengthened']=True
+		phoneme=phoneme.copy()
+		phoneme['char']=char
+		if newWord:
+			newWord=False
+			phoneme['wordStart']=True
+		if tied:
+			phoneme['tiedFrom']=True
+			tied=False
+		if stress and phoneme.get('isVowel'):
+			phoneme['stress']=stress
+			stress=0
 		phonemeList.append(phoneme)
+		lastPhoneme=phoneme
 	if len(phonemeList)==0:
 		return
+	# Insert aspirations (quiet h) after any non-voiced stop (p,t,k etc) if they are followed directly a voiced phoneme
 	aspirationIndexes=[]
 	for index,phoneme in enumerate(phonemeList):
-		nextPhoneme=phonemeList[index+1] if (index+1)<len(phonemeList) else {}
-		if phoneme.get('isStop') and not phoneme.get('isVoiced') and not nextPhoneme.get('isStop') and nextPhoneme.get('isVoiced'):
+		nextPhoneme=phonemeList[index+1] if (index+1)<len(phonemeList) else None
+		if phoneme.get('isStop') and not phoneme.get('isVoiced') and (not nextPhoneme or (not nextPhoneme.get('isStop') and nextPhoneme.get('isVoiced'))):
 			aspirationIndexes.append(index+1)
 	for index in reversed(aspirationIndexes):
 		phoneme=data['h'].copy()
 		phoneme['postStopAspiration']=True
 		phonemeList.insert(index,phoneme)
 	finalPhonemeIndex=len(phonemeList)-1
+	# Correct all h phonemes (including inserted aspirations) so that their formants match the next phoneme, or the previous if there is no next
 	for index in xrange(len(phonemeList)):
 		prevPhoneme=phonemeList[index-1] if index>0 else None
 		curPhoneme=phonemeList[index]
@@ -55,23 +86,35 @@ def generateFramesAndTiming(ipaText,basePitch=1):
 			newPhoneme=nextPhoneme.copy() if nextPhoneme else (prevPhoneme.copy() if prevPhoneme else {})
 			newPhoneme.update(curPhoneme)
 			curPhoneme=phonemeList[index]=newPhoneme
-	pitchDec=100.0/len(phonemeList)
-	for phoneme in phonemeList:
-		frame.voicePitch=basePitch
+	for index,phoneme in enumerate(phonemeList):
+		pitchRatio=float(index+1)/len(phonemeList)
+		frame.voicePitch=startPitch+(endPitch-startPitch)*pitchRatio
+		if phoneme.get('wordStart') and phoneme.get('isVowel'):
+			yield None,15/speed,15/speed
 		frameDuration=80/speed
 		fadeDuration=40/speed
 		if phoneme.get('isVowel'):
 			frameDuration*=1.25
 		if phoneme.get('lengthened'):
-			frameDuration*=1.5
+			frameDuration*=1.125
+		if phoneme.get('tiedTo'):
+			frameDuration/=1.5
+		elif phoneme.get('tiedFrom'):
+			frameDuration/=2
+		stress=phoneme.get('stress')
+		if stress:
+			frame.voicePitch*=(1.3 if stress==1 else 1.15)
+			frameDuration*=(1.05 if stress==1 else 1.01)
+			frame.preFormantGain=2.2 if stress==1 else 2.1
+		else:
+			frame.preFormantGain=2.0
 		if phoneme.get('isStop'):
-			yield None,40,40
-			frameDuration=15
+			yield None,40/speed,40/speed
+			frameDuration=15/speed
 			fadeDuration=0.001
 		elif phoneme.get('postStopAspiration'):
 			frameDuration=40
-			fadeDuration=20
+			fadeDuration=5
 		applyPhonemeToFrame(frame,phoneme)
 		yield frame,frameDuration,fadeDuration
-		basePitch-=pitchDec
-	yield None,5/speed,5/speed
+		lastPhoneme=phoneme
