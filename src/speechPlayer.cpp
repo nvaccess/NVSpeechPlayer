@@ -33,9 +33,14 @@ speechPlayer_handle_t speechPlayer_initialize(int sampleRate) {
 	return (speechPlayer_handle_t)playerHandleInfo;
 }
 
-void speechPlayer_queueFrame(speechPlayer_handle_t playerHandle, speechPlayer_frame_t* framePtr, double minFrameDuration, double fadeDuration, double finalVoicePitch, bool purgeQueue) { 
+void speechPlayer_queueFrame(speechPlayer_handle_t playerHandle, speechPlayer_frame_t* framePtr, double minFrameDuration, double fadeDuration, double finalVoicePitch, int userIndex, bool purgeQueue) { 
 	speechPlayer_handleInfo_t* playerHandleInfo=(speechPlayer_handleInfo_t*)playerHandle;
-	playerHandleInfo->frameManager->queueFrame(framePtr,(playerHandleInfo->sampleRate*minFrameDuration)/1000.0,max((playerHandleInfo->sampleRate*fadeDuration)/1000.0,1),finalVoicePitch,purgeQueue);
+	playerHandleInfo->frameManager->queueFrame(framePtr,(playerHandleInfo->sampleRate*minFrameDuration)/1000.0,max((playerHandleInfo->sampleRate*fadeDuration)/1000.0,1),finalVoicePitch,userIndex,purgeQueue);
+}
+
+int speechPlayer_getLastIndex(speechPlayer_handle_t playerHandle) {
+	speechPlayer_handleInfo_t* playerHandleInfo=(speechPlayer_handleInfo_t*)playerHandle;
+	return playerHandleInfo->frameManager->getLastIndex();
 }
 
 void speechPlayer_terminate(speechPlayer_handle_t playerHandle) {

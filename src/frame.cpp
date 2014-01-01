@@ -22,6 +22,7 @@ struct frameRequest_t {
 	bool NULLFrame;
 	speechPlayer_frame_t frame;
 	double voicePitchInc; 
+	int userIndex;
 };
 
 class FrameManagerImpl: public FrameManager {
@@ -33,6 +34,7 @@ class FrameManagerImpl: public FrameManager {
 	speechPlayer_frame_t curFrame;
 	int sampleCounter;
 	bool canRunQueue;
+	int lastUserIndex;
 
 	void updateCurrentFrame() {
 		if(!canRunQueue) return;
@@ -67,6 +69,7 @@ class FrameManagerImpl: public FrameManager {
 					oldFrameRequest->frame.preFormantGain=0;
 				}
 				if(newFrameRequest) {
+					if(newFrameRequest->userIndex!=-1) lastUserIndex=newFrameRequest->userIndex;
 					oldFrameRequest->frame.voicePitch=curFrame.voicePitch;
 					sampleCounter=0;
 				}
@@ -81,12 +84,12 @@ class FrameManagerImpl: public FrameManager {
 
 	public:
 
-	FrameManagerImpl(): curFrame(), newFrameRequest(NULL), canRunQueue(false) {
+	FrameManagerImpl(): curFrame(), newFrameRequest(NULL), canRunQueue(false), lastUserIndex(-1)  {
 		oldFrameRequest=new frameRequest_t();
 		oldFrameRequest->NULLFrame=true;
 	}
 
-	void queueFrame(speechPlayer_frame_t* frame, int minNumSamples, int numFadeSamples, double finalVoicePitch, bool purgeQueue) {
+	void queueFrame(speechPlayer_frame_t* frame, int minNumSamples, int numFadeSamples, double finalVoicePitch, int userIndex, bool purgeQueue) {
 		frameLock.acquire();
 		frameRequest_t* frameRequest=new frameRequest_t;
 		frameRequest->minNumSamples=minNumSamples;
@@ -99,6 +102,7 @@ class FrameManagerImpl: public FrameManager {
 			frameRequest->frame.voicePitch=finalVoicePitch;
 		}
 		frameRequest->voicePitchInc=0;
+		frameRequest->userIndex=userIndex;
 		if(purgeQueue) {
 			for(;!frameRequestQueue.empty();frameRequestQueue.pop()) delete frameRequestQueue.front();
 			sampleCounter=oldFrameRequest->minNumSamples;
@@ -116,6 +120,10 @@ class FrameManagerImpl: public FrameManager {
 		frameRequestQueue.push(frameRequest);
 		if(!frame&&!purgeQueue) canRunQueue=true;
 		frameLock.release();
+	}
+
+	const int getLastIndex() {
+		return lastUserIndex;
 	}
 
 	const speechPlayer_frame_t* const getCurrentFrame() {

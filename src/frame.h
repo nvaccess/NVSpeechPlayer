@@ -44,8 +44,9 @@ const int speechPlayer_frame_numParams=sizeof(speechPlayer_frame_t)/sizeof(speec
 class FrameManager {
 	public:
 	static FrameManager* create(); //factory function
-	virtual void queueFrame(speechPlayer_frame_t* frame, int minNumSamples, int numFadeSamples, double finalVoicePitch, bool purgeQueue)=0;
+	virtual void queueFrame(speechPlayer_frame_t* frame, int minNumSamples, int numFadeSamples, double finalVoicePitch, int userIndex, bool purgeQueue)=0;
 	virtual const speechPlayer_frame_t* const getCurrentFrame()=0;
+	virtual const int getLastIndex()=0; 
 	virtual ~FrameManager()=0 {};
 };
 

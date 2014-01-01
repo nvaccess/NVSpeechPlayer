@@ -3,6 +3,7 @@ import math
 import ctypes
 import speechPlayer
 import ipa
+import speech
 import synthDrivers.espeak
 import synthDrivers._espeak
 
@@ -20,6 +21,11 @@ class SynthDriver(synthDrivers.espeak.SynthDriver):
 	_curPitch=110
 
 	def speak(self,speakList):
+		userIndex=-1
+		for item in reversed(speakList):
+			if isinstance(item,speech.IndexCommand):
+				userIndex=item.index
+				break
 		textList=re_textPause.split(" ".join(x for x in speakList if isinstance(x,basestring)))
 		lastIndex=len(textList)-1
 		for index,chunk in enumerate(textList):
@@ -45,7 +51,7 @@ class SynthDriver(synthDrivers.espeak.SynthDriver):
 			chunk=" ".join(words).strip()
 			if not chunk: continue
 			for args in ipa.generateFramesAndTiming(chunk,startPitch=self._curPitch,endPitch=endPitch):
-				self.player.queueFrame(*args)
+				self.player.queueFrame(*args,userIndex=userIndex)
 			self.player.queueFrame(None,endPause,10)
 
 	def cancel(self):
@@ -62,4 +68,7 @@ class SynthDriver(synthDrivers.espeak.SynthDriver):
 
 	def _set_pitch(self,val):
 		self._curPitch=25+(21.25*(val/12.5))
+
+	def _get_lastIndex(self):
+		return self.player.getLastIndex()
 
