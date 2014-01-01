@@ -19,7 +19,7 @@ env.Append(CPPDEFINES='UNICODE')
 env.Append(CPPPATH=Dir('.'))
 if env['release']:
 	env.Append(CPPDEFINES=['NDEBUG'])
-	env.Append(CCFLAGS=['/O2','/MT','/arch:SSE2'])
+	env.Append(CCFLAGS=['/O2','/MT','/arch:SSE2','/fp:fast','/GL'])
 	env.Append(LINKFLAGS='/release')
 else:
 	env.Append(PDB='${TARGET}.pdb')
