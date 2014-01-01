@@ -89,8 +89,8 @@ def generateFramesAndTiming(ipaText,startPitch=1,endPitch=1):
 	for index,phoneme in enumerate(phonemeList):
 		pitchRatio=float(index+1)/len(phonemeList)
 		frame.voicePitch=startPitch+(endPitch-startPitch)*pitchRatio
-		if phoneme.get('wordStart') and phoneme.get('isVowel'):
-			yield None,15/speed,15/speed
+		if phoneme.get('wordStart') and phoneme.get('isVowel') and phoneme.get('stress')==1:
+			yield None,10/speed,10/speed
 		frameDuration=80/speed
 		fadeDuration=40/speed
 		if phoneme.get('isVowel'):
@@ -109,12 +109,14 @@ def generateFramesAndTiming(ipaText,startPitch=1,endPitch=1):
 		else:
 			frame.preFormantGain=2.0
 		if phoneme.get('isStop'):
-			yield None,40/speed,40/speed
-			frameDuration=15/speed
+			yield None,20/speed,20/speed
+			frameDuration=min(15,15/speed)
 			fadeDuration=0.001
 		elif phoneme.get('postStopAspiration'):
-			frameDuration=40
+			frameDuration=20/speed
 			fadeDuration=5
+		if lastPhoneme and lastPhoneme.get('isStop') and lastPhoneme.get('isVoiced') and not phoneme.get('isStop') and fadeDuration>40:
+			fadeDuration=40
 		applyPhonemeToFrame(frame,phoneme)
 		yield frame,frameDuration,fadeDuration
 		lastPhoneme=phoneme
