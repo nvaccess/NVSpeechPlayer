@@ -66,7 +66,7 @@ class VoiceGenerator {
 	double getNext(const speechPlayer_frame_t* frame) {
 		double vibrato=(sin(vibratoGen.getNext(frame->vibratoSpeed)*PITWO)*0.06*frame->vibratoPitchOffset)+1;
 		double voice=pitchGen.getNext(frame->voicePitch*vibrato);
-		double aspiration=aspirationGen.getNext()*0.5*frame->aspirationAmplitude;
+		double aspiration=aspirationGen.getNext()*0.2*frame->aspirationAmplitude;
 		double turbulence=aspiration*frame->voiceTurbulenceAmplitude;
 		glottisOpen=voice>=frame->glottalOpenQuotient;
 		if(glottisOpen) {
@@ -199,7 +199,7 @@ class SpeechWaveGeneratorImpl: public SpeechWaveGenerator {
 			if(frame) {
 				double voice=voiceGenerator.getNext(frame);
 				double cascadeOut=cascade.getNext(frame,voiceGenerator.glottisOpen,voice*frame->preFormantGain);
-				double fric=fricGenerator.getNext()*0.4*frame->fricationAmplitude;
+				double fric=fricGenerator.getNext()*0.2*frame->fricationAmplitude;
 				double parallelOut=parallel.getNext(frame,fric*frame->preFormantGain);
 				double out=(cascadeOut+parallelOut);
 				sampleBuf[i].value=max(min(out*4000,32000),-32000);
