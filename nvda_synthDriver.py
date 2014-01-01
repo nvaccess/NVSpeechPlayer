@@ -40,6 +40,7 @@ class SynthDriver(synthDrivers.espeak.SynthDriver):
 			else:
 				endPause=100
 				endPitch=self._curPitch*0.85
+			endPause/=ipa.speed
 			words=[]
 			for word in chunk.split(' '):
 				textBuf=ctypes.create_unicode_buffer(word)
@@ -52,7 +53,7 @@ class SynthDriver(synthDrivers.espeak.SynthDriver):
 			if not chunk: continue
 			for args in ipa.generateFramesAndTiming(chunk,startPitch=self._curPitch,endPitch=endPitch):
 				self.player.queueFrame(*args,userIndex=userIndex)
-			self.player.queueFrame(None,endPause,10)
+			self.player.queueFrame(None,endPause,10/ipa.speed)
 
 	def cancel(self):
 		self.player.queueFrame(None,40,40,purgeQueue=True)
