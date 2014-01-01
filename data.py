@@ -367,6 +367,7 @@
 		'copyAdjacent':True,
 		'fricationAmplitude':0,
 		'isStop':False,
+		'isVowel':False,
 		'aspirationAmplitude':1,
 		'isVoiced':False,
 		'voiceAmplitude':0,
