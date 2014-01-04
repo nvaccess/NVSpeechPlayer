@@ -91,10 +91,10 @@ def generateFramesAndTiming(ipaText,startPitch=1,endPitch=1):
 		frame.voicePitch=startPitch+(endPitch-startPitch)*pitchRatio
 		if phoneme.get('wordStart') and phoneme.get('isVowel') and phoneme.get('stress')==1:
 			yield None,10/speed,10/speed
-		frameDuration=80/speed
+		frameDuration=60/speed
 		fadeDuration=40/speed
 		if phoneme.get('isVowel'):
-			frameDuration*=1.25
+			frameDuration*=1.5
 		if phoneme.get('lengthened'):
 			frameDuration*=1.125
 		if phoneme.get('tiedTo'):
@@ -104,7 +104,7 @@ def generateFramesAndTiming(ipaText,startPitch=1,endPitch=1):
 		stress=phoneme.get('stress')
 		if stress:
 			frame.voicePitch*=(1.3 if stress==1 else 1.15)
-			frameDuration*=(1.05 if stress==1 else 1.01)
+			frameDuration*=(1.0625 if stress==1 else 1.03)
 			frame.preFormantGain=2.2 if stress==1 else 2.1
 		else:
 			frame.preFormantGain=2.0
