@@ -49,6 +49,9 @@ class SpeechPlayer(object):
 		frame=byref(frame) if frame else None
 		self._dll.speechPlayer_queueFrame(self._speechHandle,frame,c_double(minFrameDuration),c_double(fadeDuration),c_double(finalVoicePitch),userIndex,purgeQueue)
 
+	def getLastIndex(self):
+		return self._dll.speechPlayer_getLastIndex(self._speechHandle)
+
 	def __del__(self):
 		self._dll.speechPlayer_terminate(self._speechHandle)
 
