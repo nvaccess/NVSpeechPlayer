@@ -22,7 +22,7 @@ def applyPhonemeToFrame(frame,phoneme):
 
 speed=1
 
-def generateFramesAndTiming(ipaText,startPitch=1,endPitch=1):
+def generateFramesAndTiming(ipaText,startPitch=1,endPitch=1,stressInflection=1.0):
 	frame=speechPlayer.Frame()
 	frame.preFormantGain=2.0
 	frame.vibratoPitchOffset=0.4
@@ -103,7 +103,7 @@ def generateFramesAndTiming(ipaText,startPitch=1,endPitch=1):
 			frameDuration/=2
 		stress=phoneme.get('stress')
 		if stress:
-			frame.voicePitch*=(1.3 if stress==1 else 1.15)
+			frame.voicePitch*=(1+(0.3*stressInflection) if stress==1 else 1+(0.15*stressInflection)) 
 			frameDuration*=(1.0625 if stress==1 else 1.03)
 			frame.preFormantGain=2.2 if stress==1 else 2.1
 		else:
