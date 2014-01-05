@@ -66,15 +66,16 @@ class VoiceGenerator {
 	double getNext(const speechPlayer_frame_t* frame) {
 		double vibrato=(sin(vibratoGen.getNext(frame->vibratoSpeed)*PITWO)*0.06*frame->vibratoPitchOffset)+1;
 		double voice=pitchGen.getNext(frame->voicePitch*vibrato);
-		double aspiration=aspirationGen.getNext()*0.2*frame->aspirationAmplitude;
+		double aspiration=aspirationGen.getNext()*0.2;
 		double turbulence=aspiration*frame->voiceTurbulenceAmplitude;
 		glottisOpen=voice>=frame->glottalOpenQuotient;
-		if(glottisOpen) {
-			turbulence*=0.1;
+		if(!glottisOpen) {
+			turbulence*=0.01;
 		}
 		voice=(voice*2)-1;
 		voice+=turbulence;
 		voice*=frame->voiceAmplitude;
+		aspiration*=frame->aspirationAmplitude;
 		return aspiration+voice;
 	}
 
