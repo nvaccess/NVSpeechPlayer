@@ -67,13 +67,11 @@ class SynthDriver(SynthDriver):
 		self.volume=75
 		self.inflection=35
 
-
-
 	@classmethod
 	def check(cls):
 		return True
 
-	name="speechPlayer"
+	name="nvSpeechPlayer"
 	description="Speech Player"
 
 	supportedSettings=(SynthDriver.VoiceSetting(),SynthDriver.RateSetting(),SynthDriver.PitchSetting(),SynthDriver.VolumeSetting(),SynthDriver.InflectionSetting())

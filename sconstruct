@@ -10,13 +10,78 @@
 # http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
 ####
 
+import os
+
+gitRev=None
+gitDir = Dir('#').Dir('.git').abspath
+try:
+	head = file(os.path.join(gitDir, "HEAD"), "r").read().rstrip()
+	if not head.startswith("ref: "):
+		# Detached head.
+		gitRev = "DETACHED-%s" % head[:7]
+	else:
+		# Strip the "ref: " prefix to get the ref.
+		ref = head[5:]
+		commit = file(os.path.join(gitDir, ref), "r").read().rstrip()
+		gitRev = "%s-%s" % (os.path.basename(ref),commit[:7])
+except RuntimeError:
+	pass
+
 vars=Variables()
-vars.Add(BoolVariable('release','Set to true to build a release version',False))
+vars.Add(BoolVariable('release','Set to true to build a release version',True))
+vars.Add('version','version',gitRev)
+vars.Add('author','author',default='unknown')
 
-env=Environment(tools=[],variables=vars,TARGET_ARCH='x86')
+env=Environment(tools=['msvc','mssdk','textfile','default'],variables=vars,HOST_ARCH='x86',TARGET_ARCH='x86')
 
-targets=env.SConscript('src/sconscript',exports=['env'],variant_dir='build')
-env.Clean(targets,'build')
-installed=env.Install('.',targets)
+# A builder to generate a zip archive.
+# We roll our own instead of using env.Zip because we want to create some archives
+# relative to a specified directory.
+def ZipArchiveAction(target, source, env):
+	relativeTo = env.get("relativeTo", None)
+	if relativeTo:
+		relativeTo = relativeTo.path
+		def getArcName(origName):
+			arcName = os.path.relpath(origName, relativeTo)
+			if arcName.startswith(".."):
+				arcName = arcName.replace(".." + os.path.sep, "")
+			return "" if arcName == "." else arcName
+	else:
+		getArcName = lambda origName: "" if origName == "." else origName
+
+	# Nasty hack to make zipfile use best compression, since it isn't configurable.
+	# Tried setting memlevel to 9 as well, but it made compression slightly worse.
+	import zlib
+	origZDefComp = zlib.Z_DEFAULT_COMPRESSION
+	zlib.Z_DEFAULT_COMPRESSION = zlib.Z_BEST_COMPRESSION
+
+	import zipfile
+	zf = None
+	try:
+		zf = zipfile.ZipFile(target[0].path, "w", zipfile.ZIP_DEFLATED)
+		for s in source:
+			if os.path.isdir(s.path):
+				for path, dirs, files in os.walk(s.path):
+					arcPath = getArcName(path)
+					if arcPath:
+						zf.write(path, arcPath)
+					for f in files:
+						zf.write(os.path.join(path, f), os.path.join(arcPath, f))
+			else:
+				zf.write(s.path, getArcName(s.path))
+
+	finally:
+		if zf:
+			zf.close()
+		zlib.Z_DEFAULT_COMPRESSION = origZDefComp
+
+env["BUILDERS"]["ZipArchive"] = Builder(action=ZipArchiveAction)
+
+speechPlayerLib=env.SConscript('src/sconscript',exports=['env'],variant_dir='build/speechPlayerLib')
+env.Clean(speechPlayerLib,'build')
+nvdaAddon=env.SConscript('nvdaAddon/sconscript',exports=['env'],variant_dir='build/nvdaAddon')
+installed=env.Install('.',[speechPlayerLib,nvdaAddon])
+
+env.Alias("nvdaAddon",nvdaAddon)
 
 env.Default([installed])
