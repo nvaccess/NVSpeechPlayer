@@ -17,7 +17,7 @@ import sys
 import speechPlayer
 import ipa
 
-player=speechPlayer.SpeechPlayer(22050)
+player=speechPlayer.SpeechPlayer(16000)
 frame=speechPlayer.Frame()
 frame.outputGain=1.0
 frame.preFormantGain=1.0
