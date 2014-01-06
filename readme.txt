@@ -1,9 +1,9 @@
-A Klatt-like speech synthesis engine
+A Klatt-like speech synthesis engine written in c++
 
 Build Dependencies:
  * Python 2.7: http://www.python.org
  * SCons 2.3.0: http://www.scons.org/
-  * Microsoft Windows SDK 7.0 7.1 or Visual Studio 2012
+  * Microsoft Windows SDK 7.0 or Visual Studio 2012
   
 To build: run scons
 
@@ -18,6 +18,11 @@ Installing this add-on into NVDA will allow you to use the Speech Player synthes
 to run:
 python test_playvowelChart.py
 
+Credits:
+This project is based on several other projects:
+ * klsyn-88 (reference Klatt implementation): http://linguistics.berkeley.edu/phonlab/resources/ 
+ * PyKlatt (IPA formant values): http://code.google.com/p/pyklatt/
+
 --- broken examples ---
 Example: test_midiSing.py
 Allows you to control speech from a midi keyboard.
@@ -28,3 +33,4 @@ Playing notes will cause it to sing at the appropriate pitch.
 Moving the mod wheel allows you to select a vowel
 Bending the pitch wheel up increases vibrato
 Bending the pitch wheel down increases breathyness; All the way down results in whispering.
+
