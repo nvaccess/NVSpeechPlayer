@@ -93,6 +93,7 @@ class SynthDriver(SynthDriver):
 		for index,chunk in enumerate(textList):
 			if not chunk: continue
 			chunk=chunk.strip()
+			if not chunk: continue
 			if chunk[-1]=='.':
 				endPause=150
 				endPitch=self._curPitch/(1+(0.5*self._curInflection))
