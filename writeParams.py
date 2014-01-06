@@ -3,6 +3,7 @@ from collections import OrderedDict
 from pyklatt_ipa import _IPA_MAPPING as oldIpaData
 
 oldIpaData['t']['formant-gain (2-6)']=(0,0,0,0,90)
+oldIpaData['d']['formant-gain (2-6)']=(0,0,0,0,70)
 
 data=OrderedDict()
 for k in sorted(oldIpaData.keys()):
