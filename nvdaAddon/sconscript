@@ -7,10 +7,9 @@ Import([
 for filePath in ("#data.py","#ipa.py","#speechPlayer.py","#speechPlayer.dll"):
 	f=File(filePath)
 	env.Command("synthDrivers/nvSpeechPlayer/%s"%os.path.basename(f.abspath),f,Copy("$TARGET","$SOURCE"))
-env.Depends('synthDrivers','synthDrivers/nvSpeechPlayer/__init__.py')
 env.Textfile("manifest.ini",File("manifest.ini.in"),SUBST_DICT={'_version_':env['version'],'_author_':env['author']})
 
 addonRelPath=Dir('.')
 addon=env.ZipArchive(target="speechPlayer_%s.nvda-addon"%env['version'],source=[Dir('synthDrivers'),'manifest.ini'],relativeTo=addonRelPath)
-
+env.Depends(addon,'synthDrivers/nvSpeechPlayer/__init__.py')
 Return(['addon'])
