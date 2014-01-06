@@ -11,31 +11,32 @@ from synthDriverHandler import SynthDriver, NumericSynthSetting, VoiceInfo
 re_textPause=re.compile(ur"(?<=[.?!,:;])\s",re.DOTALL|re.UNICODE)
 
 voices={
-	'default':{},
-		'eloquence':{
+	'Adam':{},
+		'Benjamin':{
 		'cf1_mul':1.01,
 		'cf2_mul':1.02,
 		'cf3_mul':0.96,
 		'cf4':3700,
 		'cf5':4100,
 		'cf6':5000,
-		'cb1_mul':1.4,
-		'cb2_mul':1.2,
-		'cb3_mul':1.1,
-		'fricationAmplitude':0.7,
+		'fricationAmplitude':0.8,
 		'pf1_mul':1.01,
 		'pf2_mul':1.02,
 		'pf3_mul':0.96,
 		'pf4':3700,
 		'pf5':4100,
 		'pf6':5000,
-		'pb1_mul':1.4,
-		'pb2_mul':1.2,
-		'pb3_mul':1.1,
+		'pa6_mul':1.4,
 	},
-	'whisper':{
+	'Caleb ':{
 		'aspirationAmplitude':1,
 		'voiceAmplitude':0,
+	},
+	'David':{
+		'voicePitch_mul':0.75,
+		'cf1_mul':0.75,
+		'cf2':0.75,
+		'cf3':0.75,
 	},
 }
 
@@ -77,7 +78,7 @@ class SynthDriver(SynthDriver):
 	supportedSettings=(SynthDriver.VoiceSetting(),SynthDriver.RateSetting(),SynthDriver.PitchSetting(),SynthDriver.VolumeSetting(),SynthDriver.InflectionSetting())
 
 	_curPitch=118
-	_curVoice='default'
+	_curVoice='Adam'
 	_curInflection=1.0
 	_curVolume=1.0
 
@@ -160,7 +161,7 @@ class SynthDriver(SynthDriver):
 
 	def _set_voice(self,voice):
 		if voice not in self.availableVoices:
-			raise ValueError("unknown voice %s"%voice)
+			voice='Adam'
 		self._curVoice=voice
 		if self.exposeExtraParams:
 			for paramName in self._extraParamNames:
@@ -168,7 +169,7 @@ class SynthDriver(SynthDriver):
 
 	def _getAvailableVoices(self):
 		d=OrderedDict()
-		for name in voices:
+		for name in sorted(voices):
 			d[name]=VoiceInfo(name,name)
 		return d
 
