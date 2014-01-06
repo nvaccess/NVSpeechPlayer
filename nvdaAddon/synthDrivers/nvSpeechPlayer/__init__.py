@@ -35,8 +35,8 @@ voices={
 	'David':{
 		'voicePitch_mul':0.75,
 		'cf1_mul':0.75,
-		'cf2':0.75,
-		'cf3':0.75,
+		'cf2_mul':0.85,
+		'cf3_mul':0.85,
 	},
 }
 
