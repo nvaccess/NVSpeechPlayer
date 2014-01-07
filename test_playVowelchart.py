@@ -19,7 +19,6 @@ import ipa
 
 player=speechPlayer.SpeechPlayer(16000)
 frame=speechPlayer.Frame()
-frame.outputGain=1.0
 frame.preFormantGain=1.0
 frame.voiceAmplitude=1.0
 vowels=list(ipa.iterPhonemes(isVowel=True))

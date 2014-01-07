@@ -24,12 +24,11 @@ typedef struct {
 	speechPlayer_frameParam_t vibratoSpeed; // Speed of vibrato in hz
 	speechPlayer_frameParam_t voiceTurbulenceAmplitude; // amplitude of voice breathiness from 0 to 1 
 	speechPlayer_frameParam_t glottalOpenQuotient; // fraction between 0 and 1 of a voice cycle that the glottis is open (allows voice turbulance, alters f1...)
-	speechPlayer_frameParam_t dcf1, dcb1; // change in hz in frequency and bandwidth of cascaide formant 1 in voice cycle while glottis is open
 	speechPlayer_frameParam_t voiceAmplitude; // amplitude of voice (phonation) source between 0 and 1.
 	speechPlayer_frameParam_t aspirationAmplitude; // amplitude of aspiration (voiceless h, whisper) source between 0 and 1.
 	speechPlayer_frameParam_t cf1, cf2, cf3, cf4, cf5, cf6, cfN0, cfNP; // frequencies of standard cascaide formants, nasal (anti) 0 and nasal pole in hz
 	speechPlayer_frameParam_t cb1, cb2, cb3, cb4, cb5, cb6, cbN0, cbNP; // bandwidths of standard cascaide formants, nasal (anti) 0 and nasal pole in hz
-	speechPlayer_frameParam_t ca1, ca2, ca3, ca4, ca5, ca6, caN0, caNP; // amplitudes from 0 to 1  of standard cascaide formants, nasal (anti) 0 and nasal pole
+	speechPlayer_frameParam_t caNP; // amplitude from 0 to 1 of cascade nasal pole formant
 	// fricatives and parallel
 	speechPlayer_frameParam_t fricationAmplitude; // amplitude of frication noise from 0 to 1.
 	speechPlayer_frameParam_t pf1, pf2, pf3, pf4, pf5, pf6; // parallel formants in hz

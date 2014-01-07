@@ -142,16 +142,12 @@ class CascadeFormantGenerator {
 		input/=2.0;
 		double n0Output=rN0.resonate(input,frame->cfN0,frame->cbN0);
 		double output=calculateValueAtFadePosition(input,rNP.resonate(n0Output,frame->cfNP,frame->cbNP),frame->caNP);
-		output=calculateValueAtFadePosition(output,r6.resonate(output,frame->cf6,frame->cb6),frame->ca6);
-		output=calculateValueAtFadePosition(output,r5.resonate(output,frame->cf5,frame->cb5),frame->ca5);
-		output=calculateValueAtFadePosition(output,r4.resonate(output,frame->cf4,frame->cb4),frame->ca4);
-		output=calculateValueAtFadePosition(output,r3.resonate(output,frame->cf3,frame->cb3),frame->ca3);
-		output=calculateValueAtFadePosition(output,r2.resonate(output,frame->cf2,frame->cb2),frame->ca2);
-		if(glottisOpen) {
-			output=calculateValueAtFadePosition(output,r1.resonate(output,frame->cf1+frame->dcf1,frame->cb1+frame->dcb1),frame->ca1);
-		} else {
-			output=calculateValueAtFadePosition(output,r1.resonate(output,frame->cf1,frame->cb1),frame->ca1);
-		}
+		output=r6.resonate(output,frame->cf6,frame->cb6);
+		output=r5.resonate(output,frame->cf5,frame->cb5);
+		output=r4.resonate(output,frame->cf4,frame->cb4);
+		output=r3.resonate(output,frame->cf3,frame->cb3);
+		output=r2.resonate(output,frame->cf2,frame->cb2);
+		output=r1.resonate(output,frame->cf1,frame->cb1);
 		return output;
 	}
 

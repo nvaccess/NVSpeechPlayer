@@ -22,7 +22,6 @@ for k in sorted(oldIpaData.keys()):
 	item['cb1'],item['cb2'],item['cb3'],item['cb4'],item['cb5'],item['cb6']=v['bwidth (1-6)']
 	item['cbNP']=v['bwidth-nasal-pole']
 	item['cbN0']=v['bwidth-nasal-zero']
-	item['ca1']=item['ca2']=item['ca3']=item['ca4']=item['ca5']=item['ca6']=1.0
 	item['caNP']=1.0 if v['nasal'] else 0
 	item['pf1'],item['pf2'],item['pf3'],item['pf4'],item['pf5'],item['pf6']=v['freq (1-6)']
 	item['pb1'],item['pb2'],item['pb3'],item['pb4'],item['pb5'],item['pb6']=v['bwidth (1-6)']
