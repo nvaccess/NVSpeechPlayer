@@ -19,6 +19,7 @@ voices={
 		'cf4':3700,
 		'cf5':4100,
 		'cf6':5000,
+		'cfNP_mul':0.7,
 		'cb1_mul':1.6,
 		'fricationAmplitude':0.6,
 		'pf1_mul':1.01,
