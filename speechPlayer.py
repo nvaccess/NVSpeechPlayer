@@ -33,7 +33,7 @@ class Frame(Structure):
 		'pa1','pa2','pa3','pa4','pa5','pa6',
 		'parallelBypass',
 		'preFormantGain',
-		'outputGain',
+		'endVoicePitch',
 	]]
 
 dllPath=os.path.join(os.path.dirname(__file__),'speechPlayer.dll')
@@ -44,9 +44,9 @@ class SpeechPlayer(object):
 		self._dll=cdll.LoadLibrary(dllPath)
 		self._speechHandle=self._dll.speechPlayer_initialize(sampleRate)
 
-	def queueFrame(self,frame,minFrameDuration,fadeDuration,finalVoicePitch=0.0,userIndex=-1,purgeQueue=False):
+	def queueFrame(self,frame,minFrameDuration,fadeDuration,userIndex=-1,purgeQueue=False):
 		frame=byref(frame) if frame else None
-		self._dll.speechPlayer_queueFrame(self._speechHandle,frame,c_double(minFrameDuration),c_double(fadeDuration),c_double(finalVoicePitch),userIndex,purgeQueue)
+		self._dll.speechPlayer_queueFrame(self._speechHandle,frame,c_double(minFrameDuration),c_double(fadeDuration),userIndex,purgeQueue)
 
 	def getLastIndex(self):
 		return self._dll.speechPlayer_getLastIndex(self._speechHandle)

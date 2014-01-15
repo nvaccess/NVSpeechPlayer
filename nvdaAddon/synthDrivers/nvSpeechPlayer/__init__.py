@@ -36,6 +36,7 @@ voices={
 	},
 	'David':{
 		'voicePitch_mul':0.75,
+		'endVoicePitch_mul':0.75,
 		'cf1_mul':0.75,
 		'cf2_mul':0.85,
 		'cf3_mul':0.85,
@@ -102,9 +103,12 @@ class SynthDriver(SynthDriver):
 			elif chunk[-1]=='?':
 				endPause=130
 				endPitch=self._curPitch*(1+(0.2*self._curInflection))
-			else:
+			elif chunk[-1]==',':
 				endPause=100
 				endPitch=self._curPitch/(1+(0.17*self._curInflection))
+			else:
+				endPause=100
+				endPitch=self._curPitch/(1+(0.3*self._curInflection))
 			endPause/=ipa.speed
 			words=[]
 			for word in chunk.split(' '):
@@ -131,7 +135,7 @@ class SynthDriver(SynthDriver):
 			self.player.queueFrame(None,endPause,10/ipa.speed)
 
 	def cancel(self):
-		self.player.queueFrame(None,40,40,purgeQueue=True)
+		self.player.queueFrame(None,1,1,purgeQueue=True)
 
 	def _get_rate(self):
 		return int(math.log(ipa.speed/0.25,2)*25.0)

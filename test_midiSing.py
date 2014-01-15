@@ -16,7 +16,7 @@ from ctypes import *
 from ctypes.wintypes import *
 import speechPlayer
 import ipa
-phonemeList=list(ipa.iterPhonemes())
+phonemeList=list(ipa.iterPhonemes(_isVoiced=True))
 
 MIN_DATA=0x3c3
 
@@ -25,11 +25,8 @@ HMIDIIN=HANDLE
 MidiInProc=WINFUNCTYPE(None,HMIDIIN,c_uint,DWORD,DWORD,DWORD)
 
 frame=speechPlayer.Frame()
-frame.gain=1.0
+frame.preFormantGain=2.0
 frame.voiceAmplitude=1.0
-frame.dcf1=10
-frame.dcb1=10
-frame.voiceTurbulenceAmplitude=1
 frame.vibratoPitchOffset=0.125
 frame.vibratoSpeed=5.5
 
@@ -41,8 +38,8 @@ class MidiSing(object):
 		self._cMidiInProc=MidiInProc(self.midiInProc)
 		windll.winmm.midiInOpen(byref(self._midiHandle),midiDevice,self._cMidiInProc,None,0x30000)
 		windll.winmm.midiInStart(self._midiHandle)
-		self._lastPhoneme=sys.argv[2]
-		ipa.setFrame(frame,self._lastPhoneme)
+		self._lastPhoneme=ipa.data[sys.argv[2]]
+		ipa.applyPhonemeToFrame(frame,self._lastPhoneme)
 
 	_noteStack=[]
 	_noteState={}
@@ -73,9 +70,9 @@ class MidiSing(object):
 		elif message==0xb0:
 			numPhonemes=len(phonemeList)
 			phonemeIndex=int(data2*(numPhonemes/128.0))
-			phoneme=self._lastPhoneme=phonemeList[phonemeIndex]
-			ipa.setFrame(frame,phoneme)
-			self._player.setNewFrame(frame,2000)
+			phoneme=self._lastPhoneme=ipa.data[phonemeList[phonemeIndex]]
+			ipa.applyPhonemeToFrame(frame,phoneme)
+			if self._notePlaying: self._player.queueFrame(frame,100,100,purgeQueue=True)
 		elif message==0xe0:
 			if data2<64:
 				frame.glottalOpenQuotient=0.1*((64-data2)/64.0)
@@ -83,24 +80,24 @@ class MidiSing(object):
 				frame.voiceTurbulenceAmplitude=0
 			frame.vibratoSpeed=(5.5+((data2-64)/64.0)) if data2>=64 else 5.5
 			frame.vibratoPitchOffset=(0.125+(((data2-64)/64.0)*0.875)) if data2>=64 else (0.125*(data2/64.0)) 
-			self._player.setNewFrame(frame,2000)
+			self._player.queueFrame(frame,100,100,purgeQueue=True)
 		elif False: #message!=0xfe:
 			print "message: %x, %d, %d"%(message,data1,data2)
 		if noteChange:
 			if data1 is not None:
 				hz=440*(2**((data1-69)/12.0))
-				frame.voicePitch=hz
-				frame.voiceAmplitude=data2/128.0
-				ipa.setFrame(frame,self._lastPhoneme)
-				self._player.setNewFrame(frame,2500 if self._notePlaying else 2000)
+				frame.endVoicePitch=frame.voicePitch=hz
+				frame.preFormantGain=data2/64.0
+				ipa.applyPhonemeToFrame(frame,self._lastPhoneme)
+				self._player.queueFrame(frame,50,50,purgeQueue=True)
 				self._notePlaying=True
 			else:
-				frame.voicePitch=1
-				frame.voiceAmplitude=0
-				self._player.setNewFrame(frame,2000)
+				frame.preFormantGain=0
+				frame.endVoicePitch=frame.voicePitch=1
+				self._player.queueFrame(frame,50,50,purgeQueue=True)
+				self._player.queueFrame(None,0,0)
 				self._notePlaying=False
 
-m=MidiSing(int(sys.argv[1]),22050)
+m=MidiSing(int(sys.argv[1]),16000)
 while True:
 	windll.kernel32.SleepEx(100,True)
-

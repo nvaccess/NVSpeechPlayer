@@ -14,16 +14,17 @@ Import(['env'])
 
 env=env.Clone()
 
-env.Append(CPPFLAGS='/EHsc')
+env.Append(CPPFLAGS=['/EHsc','/arch:SSE2'])
 env.Append(CPPDEFINES='UNICODE')
 env.Append(CPPPATH=Dir('.'))
 if env['release']:
 	env.Append(CPPDEFINES=['NDEBUG'])
-	env.Append(CCFLAGS=['/O2','/MT','/arch:SSE2','/fp:fast','/GL'])
+	env.Append(CCFLAGS=['/O2','/MT','/GL'])
 	env.Append(LINKFLAGS='/release')
 else:
 	env.Append(PDB='${TARGET}.pdb')
-	env.Append(CCFLAGS=['/Od','/MTd'])
+	env.Append(CPPDEFINES=['_DEBUG'])
+	env.Append(CCFLAGS=['/Od','/MTd','/RTCsu'])
 	env.Append(CPPDEFINES=['_DEBUG'])
 
 speechPlayerLib=env.SharedLibrary(

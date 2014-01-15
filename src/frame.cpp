@@ -33,11 +33,9 @@ class FrameManagerImpl: public FrameManager {
 	frameRequest_t* newFrameRequest;
 	speechPlayer_frame_t curFrame;
 	int sampleCounter;
-	bool canRunQueue;
 	int lastUserIndex;
 
 	void updateCurrentFrame() {
-		if(!canRunQueue) return;
 		sampleCounter++;
 		if(newFrameRequest) {
 			if(sampleCounter>(newFrameRequest->numFadeSamples)) {
@@ -55,53 +53,46 @@ class FrameManagerImpl: public FrameManager {
 				newFrameRequest=frameRequestQueue.front();
 				frameRequestQueue.pop();
 				if(newFrameRequest->NULLFrame) {
-					if(false) { //oldFrameRequest->NULLFrame) {
-						delete newFrameRequest;
-						newFrameRequest=NULL;
-					} else {
-						double finalVoicePitch=newFrameRequest->frame.voicePitch;
-						memcpy(&(newFrameRequest->frame),&(oldFrameRequest->frame),sizeof(speechPlayer_frame_t));
-						newFrameRequest->frame.preFormantGain=0;
-						newFrameRequest->frame.voicePitch=finalVoicePitch;
-					}
+					memcpy(&(newFrameRequest->frame),&(oldFrameRequest->frame),sizeof(speechPlayer_frame_t));
+					newFrameRequest->frame.preFormantGain=0;
+					newFrameRequest->frame.voicePitch=curFrame.voicePitch;
+					newFrameRequest->voicePitchInc=0;
 				} else if(oldFrameRequest->NULLFrame) {
 					memcpy(&(oldFrameRequest->frame),&(newFrameRequest->frame),sizeof(speechPlayer_frame_t));
 					oldFrameRequest->frame.preFormantGain=0;
 				}
 				if(newFrameRequest) {
 					if(newFrameRequest->userIndex!=-1) lastUserIndex=newFrameRequest->userIndex;
-					oldFrameRequest->frame.voicePitch=curFrame.voicePitch;
 					sampleCounter=0;
+					newFrameRequest->frame.voicePitch+=(newFrameRequest->voicePitchInc*newFrameRequest->numFadeSamples);
 				}
-			} else {
-				canRunQueue=false;
 			}
 		} else {
 			curFrame.voicePitch+=oldFrameRequest->voicePitchInc;
+			oldFrameRequest->frame.voicePitch=curFrame.voicePitch;
 		}
 	}
 
 
 	public:
 
-	FrameManagerImpl(): curFrame(), newFrameRequest(NULL), canRunQueue(false), lastUserIndex(-1)  {
+	FrameManagerImpl(): curFrame(), newFrameRequest(NULL), lastUserIndex(-1)  {
 		oldFrameRequest=new frameRequest_t();
 		oldFrameRequest->NULLFrame=true;
 	}
 
-	void queueFrame(speechPlayer_frame_t* frame, int minNumSamples, int numFadeSamples, double finalVoicePitch, int userIndex, bool purgeQueue) {
+	void queueFrame(speechPlayer_frame_t* frame, int minNumSamples, int numFadeSamples, int userIndex, bool purgeQueue) {
 		frameLock.acquire();
 		frameRequest_t* frameRequest=new frameRequest_t;
-		frameRequest->minNumSamples=minNumSamples;
-		frameRequest->numFadeSamples=numFadeSamples;
+		frameRequest->minNumSamples=max(minNumSamples,1);
+		frameRequest->numFadeSamples=max(numFadeSamples,1);
 		if(frame) {
 			frameRequest->NULLFrame=false;
 			memcpy(&(frameRequest->frame),frame,sizeof(speechPlayer_frame_t));
+			frameRequest->voicePitchInc=(frame->endVoicePitch-frame->voicePitch)/frameRequest->minNumSamples;
 		} else {
 			frameRequest->NULLFrame=true;
-			frameRequest->frame.voicePitch=finalVoicePitch;
 		}
-		frameRequest->voicePitchInc=0;
 		frameRequest->userIndex=userIndex;
 		if(purgeQueue) {
 			for(;!frameRequestQueue.empty();frameRequestQueue.pop()) delete frameRequestQueue.front();
@@ -112,13 +103,8 @@ class FrameManagerImpl: public FrameManager {
 				delete newFrameRequest;
 				newFrameRequest=NULL;
 			}
-		} else if(!frameRequestQueue.empty()) {
-			frameRequest_t* prevFrameRequest=frameRequestQueue.back();
-			int numSamples=prevFrameRequest->minNumSamples+frameRequest->numFadeSamples;
-			prevFrameRequest->voicePitchInc=(frameRequest->frame.voicePitch-prevFrameRequest->frame.voicePitch)/numSamples;
 		}
 		frameRequestQueue.push(frameRequest);
-		if(!frame&&!purgeQueue) canRunQueue=true;
 		frameLock.release();
 	}
 

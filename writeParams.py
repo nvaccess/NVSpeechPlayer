@@ -9,11 +9,11 @@ data=OrderedDict()
 for k in sorted(oldIpaData.keys()):
 	v=oldIpaData[k]
 	data[k]=item=OrderedDict()
-	item['isNasal']=v['nasal']
-	item['isStop']=v['stop']
-	item['isLiquid']=v['liquid']
-	item['isVowel']=v['vowel']
-	item['isVoiced']=v['voice']
+	item['_isNasal']=v['nasal']
+	item['_isStop']=v['stop']
+	item['_isLiquid']=v['liquid']
+	item['_isVowel']=v['vowel']
+	item['_isVoiced']=v['voice']
 	item['voiceAmplitude']=1.0 if v['voice'] else 0 
 	item['aspirationAmplitude']=0.75 if not v['voice'] and v['voicing-linear-gain']>0 else 0.0 
 	item['cf1'],item['cf2'],item['cf3'],item['cf4'],item['cf5'],item['cf6']=v['freq (1-6)']
@@ -33,7 +33,7 @@ for k in sorted(oldIpaData.keys()):
 	else:
 		item['fricationAmplitude']=0.5 if v['voicing-linear-gain']>0 else 1.0 
 
-data['h']=dict(copyAdjacent=True,isStop=False,isVoiced=False,isVowel=False,voiceAmplitude=0,aspirationAmplitude=1,fricationAmplitude=0)
+data['h']=dict(_copyAdjacent=True,_isStop=False,_isVoiced=False,_isVowel=False,voiceAmplitude=0,aspirationAmplitude=1,fricationAmplitude=0)
 data[u'ɹ']['cf3']=1350
 
 aliases={

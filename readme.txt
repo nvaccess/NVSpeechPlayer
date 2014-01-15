@@ -18,19 +18,23 @@ Installing this add-on into NVDA will allow you to use the Speech Player synthes
 to run:
 python test_playvowelChart.py
 
+Example: test_speakIpa.py speaks a text file containing IPA symbols
+To run:
+python test_speakIpa.py <fileName>
+Where <fileName> is the path to a file containing IPA symbols.
+sampleIpa.txt is an included file with a few sentences in IPA.
+
+Example: test_midiSing.py
+Allows you to make speechPlayer sing its available voiced phonemes. 
+to run:
+python test_midiSing.py <midiDeviceNumber> <defaultvowel>
+E.g. python test_midiSing.py 0 i
+Playing notes will cause it to sing at the appropriate pitch.
+Moving the mod wheel allows you to select a phoneme
+Bending the pitch wheel up increases vibrato
+
 Credits:
 This project is based on several other projects:
  * klsyn-88 (reference Klatt implementation): http://linguistics.berkeley.edu/phonlab/resources/ 
  * PyKlatt (IPA formant values): http://code.google.com/p/pyklatt/
-
---- broken examples ---
-Example: test_midiSing.py
-Allows you to control speech from a midi keyboard.
-to run:
-python test_midiSing.py <midiDeviceNumber> <defaultvowel>
-E.g. python test_midiSing.py 0 e
-Playing notes will cause it to sing at the appropriate pitch.
-Moving the mod wheel allows you to select a vowel
-Bending the pitch wheel up increases vibrato
-Bending the pitch wheel down increases breathyness; All the way down results in whispering.
 
