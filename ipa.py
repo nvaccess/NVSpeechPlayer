@@ -94,7 +94,7 @@ def calculatePhonemeTimes(phonemeList,speed):
 	for phoneme in phonemeList:
 		phonemeDuration=60.0/speed
 		phonemeFadeDuration=50.0/speed
-		if lastPhoneme is None or not lastPhoneme.get('_isVoiced') or lastPhoneme.get('_isNasal')or not phoneme.get('_isVoiced') or phoneme.get('_isNasal'):
+		if lastPhoneme is None or not lastPhoneme.get('_isVoiced') or lastPhoneme.get('_isNasal') or lastPhoneme.get('_isStop') or not phoneme.get('_isVoiced') or phoneme.get('_isNasal'):
 			phonemeFadeDuration=min(25.0/speed,50.0)
 		if phoneme.get('_preWordGap'):
 			phonemeDuration=10.0/speed
@@ -109,16 +109,16 @@ def calculatePhonemeTimes(phonemeList,speed):
 			phonemeDuration/=2
 		stress=phoneme.get('_stress')
 		if stress:
-			phonemeDuration*=(1.0625 if stress==1 else 1.03)
+			phonemeDuration*=(1.3 if stress==1 else 1.0625)
 		if phoneme.get('_preStopGap'):
-			phonemeDuration=20.0/speed
-			phonemeFadeDuration=20.0/speed
+			phonemeDuration=25.0/speed
+			phonemeFadeDuration=10.0/speed
 		if phoneme.get('_isStop'):
 			phonemeDuration=min(15.0,15.0/speed)
 			phonemeFadeDuration=0.001
 		elif phoneme.get('_postStopAspiration'):
-			phonemeDuration=20.0/speed
-			phonemeDuration=5
+			phonemeDuration=25.0/speed
+			phonemeFadeDuration=5
 		if lastPhoneme and lastPhoneme.get('_isStop') and lastPhoneme.get('_isVoiced') and not phoneme.get('_isStop') and phonemeFadeDuration>40:
 			phonemeFadeDuration=40
 		phoneme['_duration']=phonemeDuration

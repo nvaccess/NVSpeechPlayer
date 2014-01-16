@@ -2,8 +2,8 @@
 from collections import OrderedDict
 from pyklatt_ipa import _IPA_MAPPING as oldIpaData
 
-oldIpaData['t']['formant-gain (2-6)']=(0,0,0,0,90)
-oldIpaData['d']['formant-gain (2-6)']=(0,0,0,0,70)
+oldIpaData['t']['formant-gain (2-6)']=(25,25,0,0,60)
+oldIpaData['d']['formant-gain (2-6)']=(20,20,0,0,50)
 
 data=OrderedDict()
 for k in sorted(oldIpaData.keys()):
@@ -55,6 +55,7 @@ def createMergedVowel(a,b,ratio):
 
 data['a']=createMergedVowel(u'ɑ',u'æ',0.4)
 data[u'ɒ']=createMergedVowel(u'ɑ',u'o',0.5)
+data['s']['pf6']=5250
 
 f=codecs.open('data.py','w','utf8')
 f.write(u'{\n')
