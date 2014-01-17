@@ -21,7 +21,7 @@ time.sleep(0.05)
 text=codecs.open(sys.argv[1],'r','utf8').read()
 #text=text.replace(u'a',u'æ')
 for line in text.splitlines():
-	for args in ipa.generateFramesAndTiming(line.strip(),startPitch=160,endPitch=70):
+	for args in ipa.generateFramesAndTiming(line.strip()):
 		player.queueFrame(*args)
 	player.queueFrame(None,150,0)
 time.sleep(300)

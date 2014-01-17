@@ -17,9 +17,10 @@ for k in sorted(oldIpaData.keys()):
 	item['voiceAmplitude']=1.0 if v['voice'] else 0 
 	item['aspirationAmplitude']=0.75 if not v['voice'] and v['voicing-linear-gain']>0 else 0.0 
 	item['cf1'],item['cf2'],item['cf3'],item['cf4'],item['cf5'],item['cf6']=v['freq (1-6)']
-	item['cfNP']=v['freq-nasal-pole']
+	item['cfNP']=v['freq-nasal-pole']*0.8
 	item['cfN0']=v['freq-nasal-zero']
 	item['cb1'],item['cb2'],item['cb3'],item['cb4'],item['cb5'],item['cb6']=v['bwidth (1-6)']
+	item['cb1']*=1.3
 	item['cbNP']=v['bwidth-nasal-pole']
 	item['cbN0']=v['bwidth-nasal-zero']
 	item['caNP']=1.0 if v['nasal'] else 0

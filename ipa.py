@@ -89,7 +89,6 @@ def correctHPhonemes(phonemeList):
 						curPhoneme[k]=v
 
 def calculatePhonemeTimes(phonemeList,speed):
-	totalDuration=0
 	lastPhoneme=None
 	for phoneme in phonemeList:
 		phonemeDuration=60.0/speed
@@ -123,35 +122,72 @@ def calculatePhonemeTimes(phonemeList,speed):
 			phonemeFadeDuration=40
 		phoneme['_duration']=phonemeDuration
 		phoneme['_fadeDuration']=phonemeFadeDuration
-		totalDuration+=phonemeDuration
 		lastPhoneme=phoneme
-	return totalDuration
 
-def calculatePhonemePitches(phonemeList,startPitch,endPitch,stressInflection,totalDuration):
+def calculatePhonemePitches(phonemeList,speed,basePitch,inflection,clauseType):
+	totalVoicedDuration=0
+	finalInflectionStartTime=0
+	lastPhoneme=None
+	needsSetFinalInflectionStartTime=False
+	finalVoicedIndex=0
+	for index,phoneme in enumerate(phonemeList):
+		if phoneme.get('_wordStart'):
+			needsSetFinalInflectionStartTime=True
+		if phoneme.get('_isVoiced'):
+			finalVoicedIndex=index
+			if needsSetFinalInflectionStartTime:
+				finalInflectionStartTime=totalVoicedDuration
+				needsSetFinalInflectionStartTime=False
+		if phoneme.get('_isVoiced'):
+			totalVoicedDuration+=phoneme['_duration']
+		elif lastPhoneme and lastPhoneme.get('_isVoiced'):
+			totalVoicedDuration+=lastPhoneme['_fadeDuration']
+		lastPhoneme=phoneme
 	durationCounter=0
-	lastEndVoicePitch=startPitch
-	for phoneme in phonemeList:
+	curBasePitch=basePitch
+	lastEndVoicePitch=basePitch
+	for index,phoneme in enumerate(phonemeList):
 		voicePitch=lastEndVoicePitch
-		durationCounter+=phoneme['_duration']
-		pitchRatio=float(durationCounter)/totalDuration
-		endVoicePitch=startPitch+(endPitch-startPitch)*pitchRatio
+		inFinalInflection=durationCounter>=finalInflectionStartTime
+		if phoneme.get('_isVoiced'):
+			durationCounter+=phoneme['_duration']
+		elif lastPhoneme and lastPhoneme.get('_isVoiced'):
+			durationCounter+=lastPhoneme['_fadeDuration']
+		oldBasePitch=curBasePitch
+		if not inFinalInflection:
+			curBasePitch=basePitch/(1+(inflection/20000.0)*durationCounter*speed)
+		else:
+			ratio=float(durationCounter-finalInflectionStartTime)/float(totalVoicedDuration-finalInflectionStartTime)
+			if clauseType=='.':
+				pass #ratio*=1.2
+			elif clauseType=='?':
+				ratio=0.75-(ratio/1.2)
+			elif clauseType==',':
+				ratio=ratio/5
+			else:
+				ratio=ratio/1.5
+			curBasePitch=basePitch/(1+(inflection*ratio*1.5))
+		endVoicePitch=curBasePitch
 		stress=phoneme.get('_stress')
-		if stress:
-			stressPitchMul=(1+(0.15*stressInflection) if stress==1 else 1+(0.075*stressInflection)) 
-			voicePitch*=stressPitchMul
-			endVoicePitch*=stressPitchMul
+		if stress==1:
+			if index<finalVoicedIndex:
+				voicePitch=oldBasePitch*(1+inflection/2)
+				endVoicePitch=curBasePitch*(1+inflection) 
+			else:
+				voicePitch=oldBasePitch*(1+inflection) 
+		if lastPhoneme:
+			lastPhoneme['endVoicePitch']=voicePitch
 		phoneme['voicePitch']=voicePitch
 		lastEndVoicePitch=phoneme['endVoicePitch']=endVoicePitch
+		lastPhoneme=phoneme
 
-speed=1
-
-def generateFramesAndTiming(ipaText,startPitch=1,endPitch=1,stressInflection=1.0):
+def generateFramesAndTiming(ipaText,speed=1,basePitch=100,inflection=0.5,clauseType=None):
 	phonemeList=IPAToPhonemes(ipaText)
 	if len(phonemeList)==0:
 		return
 	correctHPhonemes(phonemeList)
-	totalDuration=calculatePhonemeTimes(phonemeList,speed)
-	calculatePhonemePitches(phonemeList,startPitch,endPitch,stressInflection,totalDuration)
+	calculatePhonemeTimes(phonemeList,speed)
+	calculatePhonemePitches(phonemeList,speed,basePitch,inflection,clauseType)
 	for phoneme in phonemeList:
 		frameDuration=phoneme.pop('_duration')
 		fadeDuration=phoneme.pop('_fadeDuration')
@@ -160,7 +196,5 @@ def generateFramesAndTiming(ipaText,startPitch=1,endPitch=1,stressInflection=1.0
 		else:
 			frame=speechPlayer.Frame()
 			frame.preFormantGain=2.0
-			frame.vibratoPitchOffset=0.4
-			frame.vibratoSpeed=4
 			applyPhonemeToFrame(frame,phoneme)
 			yield frame,frameDuration,fadeDuration

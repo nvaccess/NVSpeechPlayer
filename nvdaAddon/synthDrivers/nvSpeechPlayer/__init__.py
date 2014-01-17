@@ -19,8 +19,8 @@ voices={
 		'cf4':3700,
 		'cf5':4100,
 		'cf6':5000,
-		'cfNP_mul':0.7,
-		'cb1_mul':1.6,
+		'cfNP_mul':0.9,
+		'cb1_mul':1.3,
 		'fricationAmplitude':0.6,
 		#'pf1_mul':1.01,
 		#'pf2_mul':1.02,
@@ -83,8 +83,9 @@ class SynthDriver(SynthDriver):
 
 	_curPitch=118
 	_curVoice='Adam'
-	_curInflection=1.0
+	_curInflection=0.5
 	_curVolume=1.0
+	_curRate=1.0
 
 	def speak(self,speakList):
 		userIndex=-1
@@ -98,19 +99,17 @@ class SynthDriver(SynthDriver):
 			if not chunk: continue
 			chunk=chunk.strip()
 			if not chunk: continue
-			if chunk[-1]=='.':
+			clauseType=chunk[-1]
+			if clauseType=='.':
 				endPause=150
-				endPitch=self._curPitch/(1+(0.5*self._curInflection))
-			elif chunk[-1]=='?':
+			elif clauseType=='?':
 				endPause=130
-				endPitch=self._curPitch*(1+(0.2*self._curInflection))
-			elif chunk[-1]==',':
+			elif clauseType==',':
 				endPause=100
-				endPitch=self._curPitch/(1+(0.17*self._curInflection))
 			else:
 				endPause=100
-				endPitch=self._curPitch/(1+(0.3*self._curInflection))
-			endPause/=ipa.speed
+				clauseType=None
+			endPause/=self._curRate
 			words=[]
 			for word in chunk.split(' '):
 				textBuf=ctypes.create_unicode_buffer(word)
@@ -123,7 +122,7 @@ class SynthDriver(SynthDriver):
 			if not words: continue
 			chunk=" ".join(words).strip()
 			if not chunk: continue
-			for args in ipa.generateFramesAndTiming(chunk,startPitch=self._curPitch,endPitch=endPitch,stressInflection=self._curInflection):
+			for args in ipa.generateFramesAndTiming(chunk,speed=self._curRate,basePitch=self._curPitch,inflection=self._curInflection,clauseType=clauseType):
 				frame=args[0]
 				if frame:
 					applyVoiceToFrame(frame,self._curVoice)
@@ -133,16 +132,16 @@ class SynthDriver(SynthDriver):
 							setattr(frame,x,getattr(frame,x)*ratio)
 					frame.preFormantGain*=self._curVolume
 				self.player.queueFrame(*args,userIndex=userIndex)
-			self.player.queueFrame(None,endPause,10/ipa.speed)
+			self.player.queueFrame(None,endPause,max(10.0,10.0/self._curRate))
 
 	def cancel(self):
 		self.player.queueFrame(None,1,1,purgeQueue=True)
 
 	def _get_rate(self):
-		return int(math.log(ipa.speed/0.25,2)*25.0)
+		return int(math.log(self._curRate/0.25,2)*25.0)
 
 	def _set_rate(self,val):
-		ipa.speed=0.25*(2**(val/25.0))
+		self._curRate=0.25*(2**(val/25.0))
 
 	def _get_pitch(self):
 		return int(((self._curPitch-25)*12.5)/21.25)
@@ -157,10 +156,10 @@ class SynthDriver(SynthDriver):
 		self._curVolume=val/75.0
 
 	def _get_inflection(self):
-		return int(self._curInflection*50.0)
+		return int(self._curInflection/0.01)
 
 	def _set_inflection(self,val):
-		self._curInflection=val/50.0
+		self._curInflection=val*0.01
 
 	def _get_lastIndex(self):
 		return self.player.getLastIndex()
