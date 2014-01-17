@@ -146,6 +146,7 @@ def calculatePhonemePitches(phonemeList,speed,basePitch,inflection,clauseType):
 	durationCounter=0
 	curBasePitch=basePitch
 	lastEndVoicePitch=basePitch
+	stressInflection=inflection/1.5
 	for index,phoneme in enumerate(phonemeList):
 		voicePitch=lastEndVoicePitch
 		inFinalInflection=durationCounter>=finalInflectionStartTime
@@ -155,11 +156,11 @@ def calculatePhonemePitches(phonemeList,speed,basePitch,inflection,clauseType):
 			durationCounter+=lastPhoneme['_fadeDuration']
 		oldBasePitch=curBasePitch
 		if not inFinalInflection:
-			curBasePitch=basePitch/(1+(inflection/20000.0)*durationCounter*speed)
+			curBasePitch=basePitch/(1+(inflection/15000.0)*durationCounter*speed)
 		else:
 			ratio=float(durationCounter-finalInflectionStartTime)/float(totalVoicedDuration-finalInflectionStartTime)
 			if clauseType=='.':
-				pass #ratio*=1.2
+				ratio/=1.3
 			elif clauseType=='?':
 				ratio=0.75-(ratio/1.2)
 			elif clauseType==',':
@@ -171,10 +172,12 @@ def calculatePhonemePitches(phonemeList,speed,basePitch,inflection,clauseType):
 		stress=phoneme.get('_stress')
 		if stress==1:
 			if index<finalVoicedIndex:
-				voicePitch=oldBasePitch*(1+inflection/2)
-				endVoicePitch=curBasePitch*(1+inflection) 
+				voicePitch=oldBasePitch*(1+stressInflection/3)
+				endVoicePitch=curBasePitch*(1+stressInflection)
 			else:
-				voicePitch=oldBasePitch*(1+inflection) 
+				voicePitch=oldBasePitch*(1+stressInflection) 
+			stressInflection*=0.9
+			stressInflection=max(stressInflection,inflection/2)
 		if lastPhoneme:
 			lastPhoneme['endVoicePitch']=voicePitch
 		phoneme['voicePitch']=voicePitch
