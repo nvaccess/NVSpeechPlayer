@@ -193,8 +193,8 @@ def calculatePhonemePitches(phonemeList,speed,basePitch,inflection,clauseType):
 				endVoicePitch=curBasePitch*(1+stressInflection)
 				firstStress=False
 			elif index<finalVoicedIndex:
-				voicePitch=oldBasePitch*(1+stressInflection) 
-				endVoicePitch=oldBasePitch*(1+stressInflection/3)
+				voicePitch=oldBasePitch*(1+stressInflection/3) 
+				endVoicePitch=oldBasePitch*(1+stressInflection)
 			else:
 				voicePitch=basePitch*(1+stressInflection) 
 			stressInflection*=0.9
