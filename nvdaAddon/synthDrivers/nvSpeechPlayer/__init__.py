@@ -96,9 +96,9 @@ class SynthDriver(SynthDriver):
 			if clauseType=='.':
 				endPause=150
 			elif clauseType=='?':
-				endPause=130
+				endPause=150
 			elif clauseType==',':
-				endPause=100
+				endPause=120
 			else:
 				endPause=100
 				clauseType=None

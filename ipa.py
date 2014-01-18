@@ -124,13 +124,15 @@ def calculatePhonemeTimes(phonemeList,baseSpeed):
 			phonemeDuration=25.0/speed
 			phonemeFadeDuration=10.0/speed
 		if phoneme.get('_isStop'):
-			phonemeDuration=min(15.0,15.0/speed)
+			phonemeDuration=min(20.0,20.0/speed)
 			phonemeFadeDuration=0.001
 		elif phoneme.get('_postStopAspiration'):
-			phonemeDuration=25.0/speed
+			phonemeDuration=40.0/speed
 			phonemeFadeDuration=5
 		if lastPhoneme and lastPhoneme.get('_isStop') and lastPhoneme.get('_isVoiced') and not phoneme.get('_isStop') and phonemeFadeDuration>40:
 			phonemeFadeDuration=40
+		if (not lastPhoneme or not lastPhoneme.get('_isVoiced')) and phoneme.get('_isVoiced'):
+			phonemeFadeDuration=0.001
 		phoneme['_duration']=phonemeDuration
 		phoneme['_fadeDuration']=phonemeFadeDuration
 		lastPhoneme=phoneme
