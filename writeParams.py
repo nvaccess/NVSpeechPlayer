@@ -20,7 +20,9 @@ for k in sorted(oldIpaData.keys()):
 	item['cfNP']=v['freq-nasal-pole']*0.8
 	item['cfN0']=v['freq-nasal-zero']
 	item['cb1'],item['cb2'],item['cb3'],item['cb4'],item['cb5'],item['cb6']=v['bwidth (1-6)']
-	item['cb1']*=1.3
+	item['cb1']*=1.1
+	item['cb2']*=0.75
+	item['cb3']*=0.75
 	item['cbNP']=v['bwidth-nasal-pole']
 	item['cbN0']=v['bwidth-nasal-zero']
 	item['caNP']=1.0 if v['nasal'] else 0
