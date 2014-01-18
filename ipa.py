@@ -132,7 +132,7 @@ def calculatePhonemeTimes(phonemeList,baseSpeed):
 		if lastPhoneme and lastPhoneme.get('_isStop') and lastPhoneme.get('_isVoiced') and not phoneme.get('_isStop') and phonemeFadeDuration>40:
 			phonemeFadeDuration=40
 		if (not lastPhoneme or not lastPhoneme.get('_isVoiced')) and phoneme.get('_isVoiced'):
-			phonemeFadeDuration=0.001
+			phonemeFadeDuration=1
 		phoneme['_duration']=phonemeDuration
 		phoneme['_fadeDuration']=phonemeFadeDuration
 		lastPhoneme=phoneme
