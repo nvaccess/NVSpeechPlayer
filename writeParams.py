@@ -30,7 +30,7 @@ for k in sorted(oldIpaData.keys()):
 	item['pb1'],item['pb2'],item['pb3'],item['pb4'],item['pb5'],item['pb6']=v['bwidth (1-6)']
 	item['pa1']=0
 	item['pa2'],item['pa3'],item['pa4'],item['pa5'],item['pa6']=(x/60.0 for x in v['formant-gain (2-6)'])
-	item['parallelBypass']=v['formant-bypass-gain']/80.0
+	item['parallelBypass']=v['formant-bypass-gain']/60.0
 	if v['formant-parallel-gain']==0:
 		item['fricationAmplitude']=0
 	else:

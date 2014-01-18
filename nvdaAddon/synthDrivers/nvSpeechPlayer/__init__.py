@@ -15,8 +15,8 @@ voices={
 		'Benjamin':{
 		'cf1_mul':1.01,
 		'cf2_mul':1.02,
-		'cf3_mul':0.96,
-		'cf4':3700,
+		#'cf3_mul':0.96,
+		'cf4':3770,
 		'cf5':4100,
 		'cf6':5000,
 		'cfNP_mul':0.9,

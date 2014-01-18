@@ -88,7 +88,7 @@
 		'pa4':0.0,
 		'pa5':0.0,
 		'pa6':0.0,
-		'parallelBypass':0.7875,
+		'parallelBypass':1.05,
 		'fricationAmplitude':0.5,
 	},
 	u'd':{
@@ -272,7 +272,7 @@
 		'pa4':0.0,
 		'pa5':0.0,
 		'pa6':0.0,
-		'parallelBypass':0.7125,
+		'parallelBypass':0.95,
 		'fricationAmplitude':1.0,
 	},
 	u'g':{
@@ -695,7 +695,7 @@
 		'pa4':0.0,
 		'pa5':0.0,
 		'pa6':0.0,
-		'parallelBypass':0.7875,
+		'parallelBypass':1.05,
 		'fricationAmplitude':1.0,
 	},
 	u's':{
@@ -925,7 +925,7 @@
 		'pa4':0.0,
 		'pa5':0.0,
 		'pa6':0.0,
-		'parallelBypass':0.7125,
+		'parallelBypass':0.95,
 		'fricationAmplitude':0.5,
 	},
 	u'w':{
@@ -1109,7 +1109,7 @@
 		'pa4':0.0,
 		'pa5':0.0,
 		'pa6':0.466666666667,
-		'parallelBypass':0.475,
+		'parallelBypass':0.633333333333,
 		'fricationAmplitude':0.5,
 	},
 	u'ŋ':{
@@ -1891,7 +1891,7 @@
 		'pa4':0.0,
 		'pa5':0.0,
 		'pa6':0.466666666667,
-		'parallelBypass':0.475,
+		'parallelBypass':0.633333333333,
 		'fricationAmplitude':1.0,
 	},
 	u'ɡ':{
