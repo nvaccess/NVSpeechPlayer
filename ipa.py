@@ -24,11 +24,12 @@ def applyPhonemeToFrame(frame,phoneme):
 def IPAToPhonemes(ipaText):
 	phonemeList=[]
 	textLength=len(ipaText)
-	lastPhoneme=None
 	# Collect phoneme info for each IPA character, assigning diacritics (lengthened, stress) to the last real phoneme
-	stress=0
 	tied=False
 	newWord=True
+	lastPhoneme=None
+	syllableStartPhoneme=None
+	stress=0
 	for index in xrange(textLength+1):
 		char=ipaText[index] if index<textLength else None
 		if char==' ':
@@ -47,6 +48,9 @@ def IPAToPhonemes(ipaText):
 			phoneme=data.get(char) if index<textLength else None
 			if phoneme:
 				phoneme=phoneme.copy()
+			if lastPhoneme and not lastPhoneme.get('_isVowel') and phoneme and phoneme.get('_isVowel'):
+				lastPhoneme['_syllableStart']=True
+				syllableStartPhoneme=lastPhoneme
 			if lastPhoneme and lastPhoneme.get('_isStop') and not lastPhoneme.get('_isVoiced') and (not phoneme or phoneme.get('_isVoiced')):
 				psa=data['h'].copy()
 				psa['_postStopAspiration']=True
@@ -58,11 +62,13 @@ def IPAToPhonemes(ipaText):
 			if newWord:
 				newWord=False
 				phoneme['_wordStart']=True
+				phoneme['_syllableStart']=True
+				syllableStartPhoneme=phoneme
 			if tied:
 				phoneme['_tiedFrom']=True
 				tied=False
-			if stress and phoneme.get('_isVowel'):
-				phoneme['_stress']=stress
+			if stress:
+				syllableStartPhoneme['_stress']=stress
 				stress=0
 			if phoneme.get('_wordStart') and phoneme.get('_isVowel') and phoneme.get('_stress')==1:
 				gap=dict(_silence=True,_preWordGap=True)
@@ -88,9 +94,17 @@ def correctHPhonemes(phonemeList):
 					if not k.startswith('_') and k not in curPhoneme:
 						curPhoneme[k]=v
 
-def calculatePhonemeTimes(phonemeList,speed):
+def calculatePhonemeTimes(phonemeList,baseSpeed):
 	lastPhoneme=None
+	syllableStress=0
+	speed=baseSpeed
 	for phoneme in phonemeList:
+		if phoneme.get('_syllableStart'):
+			syllableStress=phoneme.get('_stress')
+			if syllableStress:
+				speed=baseSpeed/1.3 if syllableStress==1 else baseSpeed/1.15
+			else:
+				speed=baseSpeed
 		phonemeDuration=60.0/speed
 		phonemeFadeDuration=50.0/speed
 		if lastPhoneme is None or not lastPhoneme.get('_isVoiced') or lastPhoneme.get('_isNasal') or lastPhoneme.get('_isStop') or not phoneme.get('_isVoiced') or phoneme.get('_isNasal'):
@@ -99,16 +113,13 @@ def calculatePhonemeTimes(phonemeList,speed):
 			phonemeDuration=10.0/speed
 			phonemeFadeDuration=10.0/speed
 		if phoneme.get('_isVowel'):
-			phonemeDuration*=1.5
+			phonemeDuration*=1.85
 		if phoneme.get('_lengthened'):
 			phonemeDuration*=1.125
 		if phoneme.get('_tiedTo'):
 			phonemeDuration/=1.5
 		elif phoneme.get('_tiedFrom'):
 			phonemeDuration/=2
-		stress=phoneme.get('_stress')
-		if stress:
-			phonemeDuration*=(1.3 if stress==1 else 1.0625)
 		if phoneme.get('_preStopGap'):
 			phonemeDuration=25.0/speed
 			phonemeFadeDuration=10.0/speed
@@ -127,9 +138,9 @@ def calculatePhonemeTimes(phonemeList,speed):
 def calculatePhonemePitches(phonemeList,speed,basePitch,inflection,clauseType):
 	totalVoicedDuration=0
 	finalInflectionStartTime=0
-	lastPhoneme=None
 	needsSetFinalInflectionStartTime=False
 	finalVoicedIndex=0
+	lastPhoneme=None
 	for index,phoneme in enumerate(phonemeList):
 		if phoneme.get('_wordStart'):
 			needsSetFinalInflectionStartTime=True
@@ -147,7 +158,12 @@ def calculatePhonemePitches(phonemeList,speed,basePitch,inflection,clauseType):
 	curBasePitch=basePitch
 	lastEndVoicePitch=basePitch
 	stressInflection=inflection/1.5
+	lastPhoneme=None
+	syllableStress=False
+	firstStress=True
 	for index,phoneme in enumerate(phonemeList):
+		if phoneme.get('_syllableStart'):
+			syllableStress=phoneme.get('_stress')==1
 		voicePitch=lastEndVoicePitch
 		inFinalInflection=durationCounter>=finalInflectionStartTime
 		if phoneme.get('_isVoiced'):
@@ -156,28 +172,32 @@ def calculatePhonemePitches(phonemeList,speed,basePitch,inflection,clauseType):
 			durationCounter+=lastPhoneme['_fadeDuration']
 		oldBasePitch=curBasePitch
 		if not inFinalInflection:
-			curBasePitch=basePitch/(1+(inflection/15000.0)*durationCounter*speed)
+			curBasePitch=basePitch/(1+(inflection/25000.0)*durationCounter*speed)
 		else:
 			ratio=float(durationCounter-finalInflectionStartTime)/float(totalVoicedDuration-finalInflectionStartTime)
 			if clauseType=='.':
-				ratio/=1.3
+				ratio/=1.5
 			elif clauseType=='?':
-				ratio=0.75-(ratio/1.2)
+				ratio=0.5-(ratio/1.2)
 			elif clauseType==',':
-				ratio=ratio/5
+				ratio/=8
 			else:
-				ratio=ratio/1.5
+				ratio=ratio/1.75
 			curBasePitch=basePitch/(1+(inflection*ratio*1.5))
 		endVoicePitch=curBasePitch
-		stress=phoneme.get('_stress')
-		if stress==1:
-			if index<finalVoicedIndex:
+		if syllableStress and phoneme.get('_isVowel'):
+			if firstStress:
 				voicePitch=oldBasePitch*(1+stressInflection/3)
 				endVoicePitch=curBasePitch*(1+stressInflection)
-			else:
+				firstStress=False
+			elif index<finalVoicedIndex:
 				voicePitch=oldBasePitch*(1+stressInflection) 
+				endVoicePitch=oldBasePitch*(1+stressInflection/3)
+			else:
+				voicePitch=basePitch*(1+stressInflection) 
 			stressInflection*=0.9
 			stressInflection=max(stressInflection,inflection/2)
+			syllableStress=False
 		if lastPhoneme:
 			lastPhoneme['endVoicePitch']=voicePitch
 		phoneme['voicePitch']=voicePitch
