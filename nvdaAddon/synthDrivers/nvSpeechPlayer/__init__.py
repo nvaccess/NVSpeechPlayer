@@ -103,17 +103,10 @@ class SynthDriver(SynthDriver):
 				endPause=100
 				clauseType=None
 			endPause/=self._curRate
-			words=[]
-			for word in chunk.split(' '):
-				textBuf=ctypes.create_unicode_buffer(word)
-				phonemeBuf=ctypes.create_string_buffer(1024)
-				_espeak.espeakDLL.espeak_TextToPhonemes(textBuf,phonemeBuf,1024,_espeak.espeakCHARS_WCHAR,0b10001)
-				word=phonemeBuf.value.decode('utf8')
-				word=word.replace(u'a͡ɪ',u'ɑ͡ɪ')
-				word=word.replace(u'ə͡ʊ',u'o͡ʊ')
-				words.append(word)
-			if not words: continue
-			chunk=" ".join(words).strip()
+			textBuf=ctypes.create_unicode_buffer(chunk)
+			phonemeBuf=ctypes.create_string_buffer(len(chunk)*20)
+			_espeak.espeakDLL.espeak_TextToPhonemes(textBuf,phonemeBuf,ctypes.sizeof(phonemeBuf),_espeak.espeakCHARS_WCHAR,0b10001)
+			chunk=phonemeBuf.value.decode('utf8').replace(u'a͡ɪ',u'ɑ͡ɪ').replace(u'ə͡ʊ',u'o͡ʊ').strip()
 			if not chunk: continue
 			for args in ipa.generateFramesAndTiming(chunk,speed=self._curRate,basePitch=self._curPitch,inflection=self._curInflection,clauseType=clauseType):
 				frame=args[0]
