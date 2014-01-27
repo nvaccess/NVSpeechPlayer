@@ -104,9 +104,11 @@ class SynthDriver(SynthDriver):
 				clauseType=None
 			endPause/=self._curRate
 			textBuf=ctypes.create_unicode_buffer(chunk)
-			phonemeBuf=ctypes.create_string_buffer(len(chunk)*20)
-			_espeak.espeakDLL.espeak_TextToPhonemes(textBuf,phonemeBuf,ctypes.sizeof(phonemeBuf),_espeak.espeakCHARS_WCHAR,0b10001)
-			chunk=phonemeBuf.value.decode('utf8').replace(u'a͡ɪ',u'ɑ͡ɪ').replace(u'ə͡ʊ',u'o͡ʊ').strip()
+			textPtr=ctypes.c_void_p(ctypes.addressof(textBuf))
+			phonemeBuf=_espeak.espeakDLL.espeak_TextToPhonemes(ctypes.byref(textPtr),_espeak.espeakCHARS_WCHAR,0b10001)
+			if not phonemeBuf: continue
+			chunk=ctypes.string_at(phonemeBuf)
+			chunk=chunk.decode('utf8').replace(u'a͡ɪ',u'ɑ͡ɪ').replace(u'ə͡ʊ',u'o͡ʊ').strip()
 			if not chunk: continue
 			for args in ipa.generateFramesAndTiming(chunk,speed=self._curRate,basePitch=self._curPitch,inflection=self._curInflection,clauseType=clauseType):
 				frame=args[0]
