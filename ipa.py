@@ -70,9 +70,6 @@ def IPAToPhonemes(ipaText):
 			if stress:
 				syllableStartPhoneme['_stress']=stress
 				stress=0
-			if phoneme.get('_wordStart') and phoneme.get('_isVowel') and phoneme.get('_stress')==1:
-				gap=dict(_silence=True,_preWordGap=True)
-				phonemeList.append(gap)
 			elif phoneme.get('_isStop'):
 				gap=dict(_silence=True,_preStopGap=True)
 				phonemeList.append(gap)
@@ -109,9 +106,6 @@ def calculatePhonemeTimes(phonemeList,baseSpeed):
 		phonemeFadeDuration=50.0/speed
 		if lastPhoneme is None or not lastPhoneme.get('_isVoiced') or lastPhoneme.get('_isNasal') or lastPhoneme.get('_isStop') or not phoneme.get('_isVoiced') or phoneme.get('_isNasal'):
 			phonemeFadeDuration=min(25.0/speed,50.0)
-		if phoneme.get('_preWordGap'):
-			phonemeDuration=25.0/speed
-			phonemeFadeDuration=10.0/speed
 		if phoneme.get('_isVowel'):
 			phonemeDuration*=1.85
 		if phoneme.get('_lengthened'):
