@@ -51,7 +51,7 @@ def IPAToPhonemes(ipaText):
 			if lastPhoneme and not lastPhoneme.get('_isVowel') and phoneme and phoneme.get('_isVowel'):
 				lastPhoneme['_syllableStart']=True
 				syllableStartPhoneme=lastPhoneme
-			if lastPhoneme and lastPhoneme.get('_isStop') and not lastPhoneme.get('_isVoiced') and (not phoneme or phoneme.get('_isVoiced')):
+			if lastPhoneme and lastPhoneme.get('_isStop') and not lastPhoneme.get('_isVoiced') and phoneme and phoneme.get('_isVoiced'):
 				psa=data['h'].copy()
 				psa['_postStopAspiration']=True
 				psa['_char']=None
@@ -99,7 +99,7 @@ def calculatePhonemeTimes(phonemeList,baseSpeed):
 		if phoneme.get('_syllableStart'):
 			syllableStress=phoneme.get('_stress')
 			if syllableStress:
-				speed=baseSpeed/1.3 if syllableStress==1 else baseSpeed/1.15
+				speed=baseSpeed/1.5 if syllableStress==1 else baseSpeed/1.2
 			else:
 				speed=baseSpeed
 		phonemeDuration=60.0/speed
@@ -107,9 +107,9 @@ def calculatePhonemeTimes(phonemeList,baseSpeed):
 		if lastPhoneme is None or not lastPhoneme.get('_isVoiced') or lastPhoneme.get('_isNasal') or lastPhoneme.get('_isStop') or not phoneme.get('_isVoiced') or phoneme.get('_isNasal'):
 			phonemeFadeDuration=min(25.0/speed,50.0)
 		if phoneme.get('_isVowel'):
-			phonemeDuration*=1.85
+			phonemeDuration*=1.6
 		if phoneme.get('_lengthened'):
-			phonemeDuration*=1.125
+			phonemeDuration*=1.05
 		if phoneme.get('_tiedTo'):
 			phonemeDuration/=1.5
 		elif phoneme.get('_tiedFrom'):
@@ -118,7 +118,7 @@ def calculatePhonemeTimes(phonemeList,baseSpeed):
 			phonemeDuration=40.0/speed
 			phonemeFadeDuration=10.0/speed
 		if phoneme.get('_isStop'):
-			phonemeDuration=min(20.0,20.0/speed)
+			phonemeDuration=min(10.0,10.0/speed)
 			phonemeFadeDuration=0.001
 		elif phoneme.get('_postStopAspiration'):
 			phonemeDuration=40.0/speed
