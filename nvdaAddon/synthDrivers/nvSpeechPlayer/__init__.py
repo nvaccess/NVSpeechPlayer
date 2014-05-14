@@ -70,7 +70,7 @@ class SynthDriver(SynthDriver):
 		return True
 
 	name="nvSpeechPlayer"
-	description="Speech Player"
+	description="nvSpeechPlayer"
 
 	supportedSettings=(SynthDriver.VoiceSetting(),SynthDriver.RateSetting(),SynthDriver.PitchSetting(),SynthDriver.VolumeSetting(),SynthDriver.InflectionSetting())
 

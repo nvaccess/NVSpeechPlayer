@@ -10,6 +10,6 @@ for filePath in ("#data.py","#ipa.py","#speechPlayer.py","#speechPlayer.dll"):
 env.Textfile("manifest.ini",File("manifest.ini.in"),SUBST_DICT={'_version_':env['version'],'_author_':env['author']})
 
 addonRelPath=Dir('.')
-addon=env.ZipArchive(target="speechPlayer_%s.nvda-addon"%env['version'],source=[Dir('synthDrivers'),'manifest.ini'],relativeTo=addonRelPath)
+addon=env.ZipArchive(target="nvSpeechPlayer_%s.nvda-addon"%env['version'],source=[Dir('synthDrivers'),'manifest.ini'],relativeTo=addonRelPath)
 env.Depends(addon,'synthDrivers/nvSpeechPlayer/__init__.py')
 Return(['addon'])

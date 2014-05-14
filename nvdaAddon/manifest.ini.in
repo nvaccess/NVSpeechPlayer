@@ -1,6 +1,6 @@
-name=speechPlayer
-summary=Speech Player
-description=A Klatt-based speech synthesizer
+name=nvSpeechPlayer
+summary=nvSpeechPlayer
+description=A free Klatt-based speech synthesizer
 author=_author_
 version=_version_
 
