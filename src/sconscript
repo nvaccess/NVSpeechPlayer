@@ -14,7 +14,7 @@ Import(['env'])
 
 env=env.Clone()
 
-env.Append(CPPFLAGS=['/EHsc','/arch:SSE2'])
+env.Append(CPPFLAGS=['/EHsc'])
 env.Append(CPPDEFINES='UNICODE')
 env.Append(CPPPATH=Dir('.'))
 if env['release']:
