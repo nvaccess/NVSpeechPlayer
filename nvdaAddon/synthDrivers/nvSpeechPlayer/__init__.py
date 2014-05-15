@@ -108,8 +108,13 @@ class SynthDriver(SynthDriver):
 			phonemeBuf=_espeak.espeakDLL.espeak_TextToPhonemes(ctypes.byref(textPtr),_espeak.espeakCHARS_WCHAR,0b10001)
 			if not phonemeBuf: continue
 			chunk=ctypes.string_at(phonemeBuf)
-			chunk=chunk.decode('utf8').replace(u'a͡ɪ',u'ɑ͡ɪ').replace(u'ə͡ʊ',u'o͡ʊ').strip()
+			chunk=chunk.decode('utf8') 
+			chunk=chunk.replace(u'a͡ɪ',u'ɑ͡ɪ')
+			chunk=chunk.replace(u'e͡ɪ',u'e͡j')
+			chunk=chunk.replace(u'ə͡ʊ',u'o͡ʊ')
+			chunk=chunk.strip()
 			if not chunk: continue
+			print chunk
 			for args in ipa.generateFramesAndTiming(chunk,speed=self._curRate,basePitch=self._curPitch,inflection=self._curInflection,clauseType=clauseType):
 				frame=args[0]
 				if frame:
