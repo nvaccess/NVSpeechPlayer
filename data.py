@@ -844,7 +844,7 @@
 		'_isVoiced':True,
 		'voiceAmplitude':1.0,
 		'aspirationAmplitude':0.0,
-		'cf1':350,
+		'cf1':290,
 		'cf2':1250,
 		'cf3':2200,
 		'cf4':3300,
