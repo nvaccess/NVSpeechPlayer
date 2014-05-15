@@ -51,7 +51,7 @@ def IPAToPhonemes(ipaText):
 			if lastPhoneme and not lastPhoneme.get('_isVowel') and phoneme and phoneme.get('_isVowel'):
 				lastPhoneme['_syllableStart']=True
 				syllableStartPhoneme=lastPhoneme
-			if lastPhoneme and lastPhoneme.get('_isStop') and not lastPhoneme.get('_isVoiced') and phoneme and phoneme.get('_isVoiced'):
+			if lastPhoneme and lastPhoneme.get('_isStop') and not lastPhoneme.get('_isVoiced') and phoneme and phoneme.get('_isVoiced') and not phoneme.get('_isStop'):
 				psa=data['h'].copy()
 				psa['_postStopAspiration']=True
 				psa['_char']=None
