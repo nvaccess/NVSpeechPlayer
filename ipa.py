@@ -112,9 +112,9 @@ def calculatePhonemeTimes(phonemeList,baseSpeed):
 		if phoneme.get('_lengthened'):
 			phonemeDuration*=1.05
 		if phoneme.get('_tiedTo'):
-			phonemeDuration/=1.5
+			phonemeDuration*=0.7
 		elif phoneme.get('_tiedFrom'):
-			phonemeDuration/=2
+			phonemeDuration*=0.3
 		if phoneme.get('_preStopGap'):
 			phonemeDuration=40.0/speed
 			phonemeFadeDuration=10.0/speed
