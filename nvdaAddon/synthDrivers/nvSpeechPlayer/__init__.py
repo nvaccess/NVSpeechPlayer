@@ -109,6 +109,7 @@ class SynthDriver(SynthDriver):
 			if not phonemeBuf: continue
 			chunk=ctypes.string_at(phonemeBuf)
 			chunk=chunk.decode('utf8') 
+			chunk=chunk.replace(u'ə͡l',u'ʊ͡l')
 			chunk=chunk.replace(u'a͡ɪ',u'ɑ͡ɪ')
 			chunk=chunk.replace(u'e͡ɪ',u'e͡j')
 			chunk=chunk.replace(u'ə͡ʊ',u'o͡ʊ')
