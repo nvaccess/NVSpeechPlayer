@@ -93,7 +93,7 @@ class SynthDriver(SynthDriver):
 			chunk=chunk.strip()
 			if not chunk: continue
 			clauseType=chunk[-1]
-			if clauseType=='.':
+			if clauseType in ('.','!'):
 				endPause=150
 			elif clauseType=='?':
 				endPause=150

@@ -1,4 +1,5 @@
 ﻿import os
+import itertools
 import codecs
 import speechPlayer
 
@@ -131,74 +132,159 @@ def calculatePhonemeTimes(phonemeList,baseSpeed):
 		phoneme['_fadeDuration']=phonemeFadeDuration
 		lastPhoneme=phoneme
 
-def calculatePhonemePitches(phonemeList,speed,basePitch,inflection,clauseType):
-	totalVoicedDuration=0
-	finalInflectionStartTime=0
-	needsSetFinalInflectionStartTime=False
-	finalVoicedIndex=0
-	lastPhoneme=None
-	for index,phoneme in enumerate(phonemeList):
-		if phoneme.get('_wordStart'):
-			needsSetFinalInflectionStartTime=True
+def applyPitchPath(phonemeList,startIndex,endIndex,basePitch,inflection,startPitchPercent,endPitchPercent):
+	startPitch=basePitch*(2**(((startPitchPercent-50)/50.0)*inflection))
+	endPitch=basePitch*(2**(((endPitchPercent-50)/50.0)*inflection))
+	voicedDuration=0
+	for index in xrange(startIndex,endIndex):
+		phoneme=phonemeList[index]
+		if phoneme.get('_syllableStart'):
+			syllableStress=phoneme.get('_stress')
 		if phoneme.get('_isVoiced'):
-			finalVoicedIndex=index
-			if needsSetFinalInflectionStartTime:
-				finalInflectionStartTime=totalVoicedDuration
-				needsSetFinalInflectionStartTime=False
-		if phoneme.get('_isVoiced'):
-			totalVoicedDuration+=phoneme['_duration']
-		elif lastPhoneme and lastPhoneme.get('_isVoiced'):
-			totalVoicedDuration+=lastPhoneme['_fadeDuration']
-		lastPhoneme=phoneme
-	durationCounter=0
-	curBasePitch=basePitch
-	lastEndVoicePitch=basePitch
-	stressInflection=inflection/1.5
-	lastPhoneme=None
+			voicedDuration+=phoneme['_duration']
+	curDuration=0
+	pitchDelta=endPitch-startPitch
+	curPitch=startPitch
 	syllableStress=False
-	firstStress=True
+	for index in xrange(startIndex,endIndex):
+		phoneme=phonemeList[index]
+		if phoneme.get('_syllableStart'):
+			syllableStress=phoneme.get('_stress')==1
+		phoneme['voicePitch']=curPitch
+		if phoneme.get('_isVoiced'):
+			curDuration+=phoneme['_duration']
+			pitchRatio=curDuration/float(voicedDuration)
+			curPitch=startPitch+(pitchDelta*pitchRatio)
+		phoneme['endVoicePitch']=curPitch
+
+intonationParamTable={
+	'.':{
+		'preHeadStart':46,
+		'preHeadEnd':57,
+		'headExtendFrom':4,
+		'headStart':80,
+		'headEnd':50,
+		'headSteps':[100,75,50,25,0,63,38,13,0],
+		'headStressEndDelta':-16,
+		'headUnstressedRunStartDelta':-8,
+		'headUnstressedRunEndDelta':-5,
+		'nucleus0Start':64,
+		'nucleus0End':8,
+		'nucleusStart':70,
+		'nucleusEnd':18,
+		'tailStart':24,
+		'tailEnd':8,
+	},
+	',':{
+		'preHeadStart':46,
+		'preHeadEnd':57,
+		'headExtendFrom':4,
+		'headStart':80,
+		'headEnd':60,
+		'headSteps':[100,75,50,25,0,63,38,13,0],
+		'headStressEndDelta':-16,
+		'headUnstressedRunStartDelta':-8,
+		'headUnstressedRunEndDelta':-5,
+		'nucleus0Start':34,
+		'nucleus0End':52,
+		'nucleusStart':78,
+		'nucleusEnd':34,
+		'tailStart':34,
+		'tailEnd':52,
+	},
+	'?':{
+		'preHeadStart':45,
+		'preHeadEnd':56,
+		'headExtendFrom':3,
+		'headStart':75,
+		'headEnd':43,
+		'headSteps':[100,75,50,20,60,35,11,0],
+		'headStressEndDelta':-16,
+		'headUnstressedRunStartDelta':-7,
+		'headUnstressedRunEndDelta':0,
+		'nucleus0Start':34,
+		'nucleus0End':68,
+		'nucleusStart':86,
+		'nucleusEnd':21,
+		'tailStart':34,
+		'tailEnd':68,
+	},
+	'!':{
+		'preHeadStart':46,
+		'preHeadEnd':57,
+		'headExtendFrom':3,
+		'headStart':90,
+		'headEnd':50,
+		'headSteps':[100,75,50,16,82,50,32,16],
+		'headStressEndDelta':-16,
+		'headUnstressedRunStartDelta':-9,
+		'headUnstressedRunEndDelta':0,
+		'nucleus0Start':92,
+		'nucleus0End':4,
+		'nucleusStart':92,
+		'nucleusEnd':80,
+		'tailStart':76,
+		'tailEnd':4,
+	}
+}
+
+def calculatePhonemePitches(phonemeList,speed,basePitch,inflection,clauseType):
+	intonationParams=intonationParamTable[clauseType or '.']
+	preHeadStart=0
+	preHeadEnd=len(phonemeList)
 	for index,phoneme in enumerate(phonemeList):
 		if phoneme.get('_syllableStart'):
 			syllableStress=phoneme.get('_stress')==1
-		voicePitch=lastEndVoicePitch
-		inFinalInflection=durationCounter>=finalInflectionStartTime
-		if phoneme.get('_isVoiced'):
-			durationCounter+=phoneme['_duration']
-		elif lastPhoneme and lastPhoneme.get('_isVoiced'):
-			durationCounter+=lastPhoneme['_fadeDuration']
-		oldBasePitch=curBasePitch
-		if not inFinalInflection:
-			curBasePitch=basePitch/(1+(inflection/25000.0)*durationCounter*speed)
+			if syllableStress:
+				preHeadEnd=index
+				break
+	if (preHeadEnd-preHeadStart)>0:
+		applyPitchPath(phonemeList,preHeadStart,preHeadEnd,basePitch,inflection,intonationParams['preHeadStart'],intonationParams['preHeadEnd'])
+	nucleusStart=nucleusEnd=tailStart=tailEnd=len(phonemeList)
+	for index in xrange(nucleusEnd-1,preHeadEnd-1,-1):
+		phoneme=phonemeList[index]
+		if phoneme.get('_syllableStart'):
+			syllableStress=phoneme.get('_stress')==1
+			if syllableStress :
+				nucleusStart=index
+				break
+			else:
+				nucleusEnd=tailStart=index
+	hasTail=(tailEnd-tailStart)>0
+	if hasTail:
+		applyPitchPath(phonemeList,tailStart,tailEnd,basePitch,inflection,intonationParams['tailStart'],intonationParams['tailEnd'])
+	if (nucleusEnd-nucleusStart)>0:
+		if hasTail:
+			applyPitchPath(phonemeList,nucleusStart,nucleusEnd,basePitch,inflection,intonationParams['nucleusStart'],intonationParams['nucleusEnd'])
 		else:
-			ratio=float(durationCounter-finalInflectionStartTime)/float(totalVoicedDuration-finalInflectionStartTime)
-			if clauseType=='.':
-				ratio/=1.5
-			elif clauseType=='?':
-				ratio=0.5-(ratio/1.2)
-			elif clauseType==',':
-				ratio/=8
-			else:
-				ratio=ratio/1.75
-			curBasePitch=basePitch/(1+(inflection*ratio*1.5))
-		endVoicePitch=curBasePitch
-		if syllableStress and phoneme.get('_isVowel'):
-			if firstStress:
-				voicePitch=oldBasePitch*(1+stressInflection/3)
-				endVoicePitch=curBasePitch*(1+stressInflection)
-				firstStress=False
-			elif index<finalVoicedIndex:
-				voicePitch=oldBasePitch*(1+stressInflection/3) 
-				endVoicePitch=oldBasePitch*(1+stressInflection)
-			else:
-				voicePitch=basePitch*(1+stressInflection) 
-			stressInflection*=0.9
-			stressInflection=max(stressInflection,inflection/2)
-			syllableStress=False
-		if lastPhoneme:
-			lastPhoneme['endVoicePitch']=voicePitch
-		phoneme['voicePitch']=voicePitch
-		lastEndVoicePitch=phoneme['endVoicePitch']=endVoicePitch
-		lastPhoneme=phoneme
+			applyPitchPath(phonemeList,nucleusStart,nucleusEnd,basePitch,inflection,intonationParams['nucleus0Start'],intonationParams['nucleus0End'])
+	if preHeadEnd<nucleusStart:
+		headStartPitch=intonationParams['headStart']
+		headEndPitch=intonationParams['headEnd']
+		lastHeadStressStart=None
+		lastHeadUnstressedRunStart=None
+		stressEndPitch=None
+		steps=intonationParams['headSteps']
+		extendFrom=intonationParams['headExtendFrom']
+		stressStartPercentageGen=itertools.chain(steps,itertools.cycle(steps[extendFrom:]))
+		for index in xrange(preHeadEnd,nucleusStart+1):
+			phoneme=phonemeList[index]
+			syllableStress=phoneme.get('_stress')==1
+			if phoneme.get('_syllableStart'):
+				if lastHeadStressStart is not None:
+					stressStartPitch=headEndPitch+(((headStartPitch-headEndPitch)/100.0)*stressStartPercentageGen.next())
+					stressEndPitch=stressStartPitch+intonationParams['headStressEndDelta']
+					applyPitchPath(phonemeList,lastHeadStressStart,index,basePitch,inflection,stressStartPitch,stressEndPitch)
+					lastHeadStressStart=None
+				if syllableStress :
+					if lastHeadUnstressedRunStart is not None:
+						unstressedRunStartPitch=stressEndPitch+intonationParams['headUnstressedRunStartDelta']
+						unstressedRunEndPitch=stressEndPitch+intonationParams['headUnstressedRunEndDelta']
+						applyPitchPath(phonemeList,lastHeadUnstressedRunStart,index,basePitch,inflection,unstressedRunStartPitch,unstressedRunEndPitch)
+						lastHeadUnstressedRunStart=None
+					lastHeadStressStart=index
+				elif lastHeadUnstressedRunStart is None: 
+					lastHeadUnstressedRunStart=index
 
 def generateFramesAndTiming(ipaText,speed=1,basePitch=100,inflection=0.5,clauseType=None):
 	phonemeList=IPAToPhonemes(ipaText)
