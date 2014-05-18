@@ -110,6 +110,7 @@ class SynthDriver(SynthDriver):
 			chunk=ctypes.string_at(phonemeBuf)
 			chunk=chunk.decode('utf8') 
 			chunk=re.sub(ur'([^ˈ͡\s^])(ɪd)',ur'\1əd',chunk)
+			chunk=chunk.replace(u'wˈɒn',u'wˈɑn')
 			chunk=chunk.replace(u'tʊ ',u'tu ')
 			chunk=chunk.replace(u'e͡ə',u'ɛɛː')
 			chunk=chunk.replace(u'iː',u'i͡j')
