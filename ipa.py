@@ -96,7 +96,8 @@ def calculatePhonemeTimes(phonemeList,baseSpeed):
 	lastPhoneme=None
 	syllableStress=0
 	speed=baseSpeed
-	for phoneme in phonemeList:
+	for index,phoneme in enumerate(phonemeList):
+		nextPhoneme=phonemeList[index+1] if len(phonemeList)>index+1 else None
 		if phoneme.get('_syllableStart'):
 			syllableStress=phoneme.get('_stress')
 			if syllableStress:
@@ -108,7 +109,10 @@ def calculatePhonemeTimes(phonemeList,baseSpeed):
 		if lastPhoneme is None or not lastPhoneme.get('_isVowel') or not phoneme.get('_isVoiced') or phoneme.get('_isNasal'):
 			phonemeFadeDuration=min(25.0/speed,50.0)
 		if phoneme.get('_isVowel'):
-			phonemeDuration*=1.5
+			if not syllableStress and nextPhoneme and nextPhoneme.get('_isLiquid'):
+				phonemeDuration*=0.2
+			else:
+				phonemeDuration*=1.05
 		elif phoneme.get('_isVoiced') and not phoneme.get('_isStop') and not phoneme.get('_isNasal'):
 			phonemeDuration/=1.85
 		if phoneme.get('_lengthened'):
