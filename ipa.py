@@ -101,39 +101,39 @@ def calculatePhonemeTimes(phonemeList,baseSpeed):
 		if phoneme.get('_syllableStart'):
 			syllableStress=phoneme.get('_stress')
 			if syllableStress:
-				speed=baseSpeed/1.4 if syllableStress==1 else baseSpeed/1.18
+				speed=baseSpeed/1.4 if syllableStress==1 else baseSpeed/1.2
 			else:
 				speed=baseSpeed
 		phonemeDuration=60.0/speed
-		phonemeFadeDuration=50.0/speed
-		if lastPhoneme is None or not lastPhoneme.get('_isVowel') or not phoneme.get('_isVoiced') or phoneme.get('_isNasal'):
-			phonemeFadeDuration=min(25.0/speed,50.0)
-		if phoneme.get('_isVowel'):
-			if not syllableStress and nextPhoneme and nextPhoneme.get('_isLiquid'):
-				phonemeDuration*=0.2
-			else:
-				phonemeDuration*=1.05
-		elif phoneme.get('_isVoiced') and not phoneme.get('_isStop') and not phoneme.get('_isNasal'):
-			phonemeDuration/=1.85
-		if phoneme.get('_lengthened'):
-			phonemeDuration*=1.05
-		if phoneme.get('_tiedTo'):
-			phonemeDuration*=0.7
-		elif phoneme.get('_tiedFrom'):
-			phonemeDuration*=0.3
+		phonemeFadeDuration=10.0/speed
 		if phoneme.get('_preStopGap'):
-			phonemeDuration=40.0/speed
-			phonemeFadeDuration=10.0/speed
-		if phoneme.get('_isStop'):
-			phonemeDuration=min(10.0,10.0/speed)
-			phonemeFadeDuration=0.001
+			phonemeDuration=30.0/speed
 		elif phoneme.get('_postStopAspiration'):
-			phonemeDuration=40.0/speed
-			phonemeFadeDuration=5
-		if lastPhoneme and lastPhoneme.get('_isStop') and lastPhoneme.get('_isVoiced') and not phoneme.get('_isStop') and phonemeFadeDuration>40:
-			phonemeFadeDuration=40
-		if (not lastPhoneme or not lastPhoneme.get('_isVoiced')) and phoneme.get('_isVoiced'):
-			phonemeFadeDuration=1
+			phonemeDuration=30.0/speed
+		elif phoneme.get('_isStop'):
+			phonemeDuration=min(6.0/speed,6.0)
+			phonemeFadeDuration=0.001
+		elif not phoneme.get('_isVoiced'):
+			phonemeDuration=45.0/speed
+		else: # is voiced
+			if not lastPhoneme or not lastPhoneme.get('_isVoiced'):
+				phonemeFadeDuration=1
+			if phoneme.get('_isVowel'):
+				if lastPhoneme and (lastPhoneme.get('_isLiquid') or lastPhoneme.get('_isSemivowel')): 
+					phonemeFadeDuration=25.0/speed
+				if phoneme.get('_tiedTo'):
+					phonemeDuration=45.0/speed
+				elif phoneme.get('_tiedFrom'):
+					phonemeDuration=20.0/speed
+					phonemeFadeDuration=20.0/speed
+				elif not syllableStress and nextPhoneme and nextPhoneme.get('_isLiquid'):
+					phonemeDuration=30.0/speed
+			else: # not a vowel
+				phonemeDuration=30.0/speed
+				if phoneme.get('_isLiquid') or phoneme.get('_isSemivowel'):
+					phonemeFadeDuration=20.0/speed
+		if phoneme.get('_lengthened'):
+			phonemeDuration*=1.125
 		phoneme['_duration']=phonemeDuration
 		phoneme['_fadeDuration']=phonemeFadeDuration
 		lastPhoneme=phoneme
