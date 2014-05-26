@@ -12,7 +12,11 @@ from synthDriverHandler import SynthDriver, NumericSynthSetting, VoiceInfo
 re_textPause=re.compile(ur"(?<=[.?!,:;])\s",re.DOTALL|re.UNICODE)
 
 voices={
-	'Adam':{},
+	'Adam':{
+		'cb1_mul':1.3,
+		'pa6_mul':1.3,
+		'fricationAmplitude':0.85,
+	},
 		'Benjamin':{
 		'cf1_mul':1.01,
 		'cf2_mul':1.02,
