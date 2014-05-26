@@ -133,7 +133,7 @@ def calculatePhonemeTimes(phonemeList,baseSpeed):
 				if phoneme.get('_isLiquid') or phoneme.get('_isSemivowel'):
 					phonemeFadeDuration=20.0/speed
 		if phoneme.get('_lengthened'):
-			phonemeDuration*=1.125
+			phonemeDuration*=1.05
 		phoneme['_duration']=phonemeDuration
 		phoneme['_fadeDuration']=phonemeFadeDuration
 		lastPhoneme=phoneme
