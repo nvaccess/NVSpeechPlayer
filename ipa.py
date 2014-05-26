@@ -22,33 +22,56 @@ def applyPhonemeToFrame(frame,phoneme):
 		if not k.startswith('_'):
 			setattr(frame,k,v)
 
+def _IPAToPhonemesHelper(text):
+	textLen=len(text)
+	index=0
+	offset=0
+	for index in xrange(textLen):
+		index=index+offset
+		if index>=textLen:
+			break
+		isLengthened=(text[index+1:index+2]==u'ː')
+		isTiedTo=(text[index+1:index+2]==u'͡')
+		isTiedFrom=(text[index-1:index]==u'͡') if index>0 else False
+		phoneme=None
+		if isTiedTo:
+			phoneme=data.get(text[index:index+3])
+			offset+=2 if phoneme else 1
+		elif isLengthened:
+			phoneme=data.get(text[index:index+2])
+			offset+=1
+		char=text[index]
+		if not phoneme:
+			phoneme=data.get(char)
+		if not phoneme:
+			yield char,None
+			continue
+		phoneme=phoneme.copy()
+		if isTiedFrom:
+			phoneme['_tiedFrom']=True
+		elif isTiedTo:
+			phoneme['_tiedTo']=True
+		if isLengthened:
+			phoneme['_lengthened']=True
+		phoneme['_char']=char
+		yield char,phoneme
+
 def IPAToPhonemes(ipaText):
 	phonemeList=[]
 	textLength=len(ipaText)
 	# Collect phoneme info for each IPA character, assigning diacritics (lengthened, stress) to the last real phoneme
-	tied=False
 	newWord=True
 	lastPhoneme=None
 	syllableStartPhoneme=None
 	stress=0
-	for index in xrange(textLength+1):
-		char=ipaText[index] if index<textLength else None
+	for char,phoneme in _IPAToPhonemesHelper(ipaText):
 		if char==' ':
 			newWord=True
-		elif char==u'ː':
-			if lastPhoneme is not None: lastPhoneme['_lengthened']=True
 		elif char==u'ˈ':
 			stress=1
 		elif char==u'ˌ':
 			stress=2
-		elif char==u'͡':
-			if lastPhoneme is not None:
-				lastPhoneme['_tiedTo']=True
-				tied=True
-		else:
-			phoneme=data.get(char) if index<textLength else None
-			if phoneme:
-				phoneme=phoneme.copy()
+		elif phoneme:
 			if lastPhoneme and not lastPhoneme.get('_isVowel') and phoneme and phoneme.get('_isVowel'):
 				lastPhoneme['_syllableStart']=True
 				syllableStartPhoneme=lastPhoneme
@@ -58,20 +81,15 @@ def IPAToPhonemes(ipaText):
 				psa['_char']=None
 				phonemeList.append(psa)
 				lastPhoneme=psa
-			if not phoneme: continue
-			phoneme['_char']=char
 			if newWord:
 				newWord=False
 				phoneme['_wordStart']=True
 				phoneme['_syllableStart']=True
 				syllableStartPhoneme=phoneme
-			if tied:
-				phoneme['_tiedFrom']=True
-				tied=False
 			if stress:
 				syllableStartPhoneme['_stress']=stress
 				stress=0
-			elif phoneme.get('_isStop'):
+			elif phoneme.get('_isStop') or phoneme.get('_isAfricate'):
 				gap=dict(_silence=True,_preStopGap=True)
 				phonemeList.append(gap)
 			phonemeList.append(phoneme)
@@ -113,10 +131,13 @@ def calculatePhonemeTimes(phonemeList,baseSpeed):
 		elif phoneme.get('_isStop'):
 			phonemeDuration=min(6.0/speed,6.0)
 			phonemeFadeDuration=0.001
+		elif phoneme.get('_isAfricate'):
+			phonemeDuration=30.0/speed
+			phonemeFadeDuration=0.001
 		elif not phoneme.get('_isVoiced'):
 			phonemeDuration=45.0/speed
 		else: # is voiced
-			if not lastPhoneme or not lastPhoneme.get('_isVoiced'):
+			if not lastPhoneme or not lastPhoneme.get('_isVoiced') or lastPhoneme.get('_isAfricate'):
 				phonemeFadeDuration=1
 			if phoneme.get('_isVowel'):
 				if lastPhoneme and (lastPhoneme.get('_isLiquid') or lastPhoneme.get('_isSemivowel')): 
