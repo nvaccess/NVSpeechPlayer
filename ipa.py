@@ -116,10 +116,11 @@ def calculatePhonemeTimes(phonemeList,baseSpeed):
 	speed=baseSpeed
 	for index,phoneme in enumerate(phonemeList):
 		nextPhoneme=phonemeList[index+1] if len(phonemeList)>index+1 else None
-		if phoneme.get('_syllableStart'):
+		syllableStart=phoneme.get('_syllableStart')
+		if syllableStart:
 			syllableStress=phoneme.get('_stress')
 			if syllableStress:
-				speed=baseSpeed/1.4 if syllableStress==1 else baseSpeed/1.2
+				speed=baseSpeed/1.4 if syllableStress==1 else baseSpeed/1.24
 			else:
 				speed=baseSpeed
 		phonemeDuration=60.0/speed
@@ -147,8 +148,8 @@ def calculatePhonemeTimes(phonemeList,baseSpeed):
 				elif phoneme.get('_tiedFrom'):
 					phonemeDuration=20.0/speed
 					phonemeFadeDuration=20.0/speed
-				elif not syllableStress and nextPhoneme and nextPhoneme.get('_isLiquid'):
-					phonemeDuration=30.0/speed
+				elif not syllableStress and not syllableStart and nextPhoneme and (nextPhoneme.get('_isLiquid') or nextPhoneme.get('_isNasal')):
+					phonemeDuration=40.0/speed
 			else: # not a vowel
 				phonemeDuration=30.0/speed
 				if phoneme.get('_isLiquid') or phoneme.get('_isSemivowel'):
