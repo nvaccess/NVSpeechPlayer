@@ -26,10 +26,18 @@ def _IPAToPhonemesHelper(text):
 	textLen=len(text)
 	index=0
 	offset=0
+	curStress=0
 	for index in xrange(textLen):
 		index=index+offset
 		if index>=textLen:
 			break
+		char=text[index]
+		if char==u'ˈ':
+			curStress=1
+			continue
+		elif char==u'ˌ':
+			curStress=2
+			continue
 		isLengthened=(text[index+1:index+2]==u'ː')
 		isTiedTo=(text[index+1:index+2]==u'͡')
 		isTiedFrom=(text[index-1:index]==u'͡') if index>0 else False
@@ -40,13 +48,15 @@ def _IPAToPhonemesHelper(text):
 		elif isLengthened:
 			phoneme=data.get(text[index:index+2])
 			offset+=1
-		char=text[index]
 		if not phoneme:
 			phoneme=data.get(char)
 		if not phoneme:
 			yield char,None
 			continue
 		phoneme=phoneme.copy()
+		if curStress:
+			phoneme['_stress']=curStress
+			curStress=0
 		if isTiedFrom:
 			phoneme['_tiedFrom']=True
 		elif isTiedTo:
@@ -63,18 +73,17 @@ def IPAToPhonemes(ipaText):
 	newWord=True
 	lastPhoneme=None
 	syllableStartPhoneme=None
-	stress=0
 	for char,phoneme in _IPAToPhonemesHelper(ipaText):
 		if char==' ':
 			newWord=True
-		elif char==u'ˈ':
-			stress=1
-		elif char==u'ˌ':
-			stress=2
 		elif phoneme:
+			stress=phoneme.pop('_stress',0)
 			if lastPhoneme and not lastPhoneme.get('_isVowel') and phoneme and phoneme.get('_isVowel'):
 				lastPhoneme['_syllableStart']=True
 				syllableStartPhoneme=lastPhoneme
+			elif stress==1 and lastPhoneme and lastPhoneme.get('_isVowel'):
+				phoneme['_syllableStart']=True
+				syllableStartPhoneme=phoneme
 			if lastPhoneme and lastPhoneme.get('_isStop') and not lastPhoneme.get('_isVoiced') and phoneme and phoneme.get('_isVoiced') and not phoneme.get('_isStop'):
 				psa=data['h'].copy()
 				psa['_postStopAspiration']=True
@@ -88,7 +97,6 @@ def IPAToPhonemes(ipaText):
 				syllableStartPhoneme=phoneme
 			if stress:
 				syllableStartPhoneme['_stress']=stress
-				stress=0
 			elif phoneme.get('_isStop') or phoneme.get('_isAfricate'):
 				gap=dict(_silence=True,_preStopGap=True)
 				phonemeList.append(gap)
@@ -148,8 +156,11 @@ def calculatePhonemeTimes(phonemeList,baseSpeed):
 				elif phoneme.get('_tiedFrom'):
 					phonemeDuration=20.0/speed
 					phonemeFadeDuration=20.0/speed
-				elif not syllableStress and not syllableStart and nextPhoneme and (nextPhoneme.get('_isLiquid') or nextPhoneme.get('_isNasal')):
-					phonemeDuration=40.0/speed
+				elif not syllableStress and not syllableStart and nextPhoneme and not nextPhoneme.get('_wordStart') and (nextPhoneme.get('_isLiquid') or nextPhoneme.get('_isNasal')):
+					if nextPhoneme.get('_isLiquid'):
+						phonemeDuration=30.0/speed
+					else:
+						phonemeDuration=40.0/speed
 			else: # not a vowel
 				phonemeDuration=30.0/speed
 				if phoneme.get('_isLiquid') or phoneme.get('_isSemivowel'):
@@ -166,8 +177,6 @@ def applyPitchPath(phonemeList,startIndex,endIndex,basePitch,inflection,startPit
 	voicedDuration=0
 	for index in xrange(startIndex,endIndex):
 		phoneme=phonemeList[index]
-		if phoneme.get('_syllableStart'):
-			syllableStress=phoneme.get('_stress')
 		if phoneme.get('_isVoiced'):
 			voicedDuration+=phoneme['_duration']
 	curDuration=0
@@ -176,8 +185,6 @@ def applyPitchPath(phonemeList,startIndex,endIndex,basePitch,inflection,startPit
 	syllableStress=False
 	for index in xrange(startIndex,endIndex):
 		phoneme=phonemeList[index]
-		if phoneme.get('_syllableStart'):
-			syllableStress=phoneme.get('_stress')==1
 		phoneme['voicePitch']=curPitch
 		if phoneme.get('_isVoiced'):
 			curDuration+=phoneme['_duration']
