@@ -67,8 +67,8 @@ class SynthDriver(SynthDriver):
 		_espeak.setVoiceByLanguage('en')
 		self.pitch=50
 		self.rate=50
-		self.volume=75
-		self.inflection=35
+		self.volume=90
+		self.inflection=60
 
 	@classmethod
 	def check(cls):
