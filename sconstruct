@@ -34,7 +34,7 @@ vars.Add(BoolVariable('release','Set to true to build a release version',True))
 vars.Add('version','version',gitRev)
 vars.Add('author','author',default='unknown')
 
-env=Environment(tools=['default','windowsSdk','textfile','default'],variables=vars,HOST_ARCH='x86',TARGET_ARCH='x86')
+env=Environment(tools=['default','windowsSdk','textfile'],variables=vars,HOST_ARCH='x86',TARGET_ARCH='x86')
 
 # A builder to generate a zip archive.
 # We roll our own instead of using env.Zip because we want to create some archives
