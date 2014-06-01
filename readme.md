@@ -1,8 +1,20 @@
 # NV Speech Player
 A Klatt-based speech synthesis engine written in c++
+Author: NV Access Limited
 
 ## Overview
 NV Speech Player is a free and open-source prototype speech synthesizer that can be used by NVDA. It generates speech using Klatt synthesis, making it somewhat similar to speech synthesizers such as Dectalk and Eloquence.
+
+## Licence and copyright
+NV Speech Player is Copyright (c) 2014 NV Speech Player contributors
+NV Speech Player is covered by the GNU General Public License (Version 2). 
+You are free to share or change this software in any way you like 
+as long as it is accompanied by the license and you make all 
+source code available to anyone who wants it. This applies to 
+both original and modified copies of this software, plus any 
+derivative works.
+For further details, you can view the license online at: 
+http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
 ## Background
 The 70s and 80s saw much research in speech synthesis. One of the most prominent synthesis models that appeared was a formant-frequency synthesis known as Klatt synthesis. Some well-known Klatt synthesizers are Dectalk and Eloquence. They are well suited for use by the blind as they are extremely responsive, their pronunciation is smooth and predictable, and they are small in memory footprint. However, research soon moved onto other forms of synthesis such as concatinative speech, as although this was slower, it was much closer to the human voice. This was an advantage for usage in mainstream applications such as GPS units or telephone systems, but not necessarily so much of an advantage to the blind, who tend to care more about responsiveness and predictability over prettiness.
