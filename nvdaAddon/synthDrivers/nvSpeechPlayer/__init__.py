@@ -169,10 +169,12 @@ class SynthDriver(SynthDriver):
 			endPause/=self._curRate
 			textBuf=ctypes.create_unicode_buffer(chunk)
 			textPtr=ctypes.c_void_p(ctypes.addressof(textBuf))
-			phonemeBuf=_espeak.espeakDLL.espeak_TextToPhonemes(ctypes.byref(textPtr),_espeak.espeakCHARS_WCHAR,0b10001)
-			if not phonemeBuf: continue
-			chunk=ctypes.string_at(phonemeBuf)
-			chunk=chunk.decode('utf8') 
+			chunks=[]
+			while textPtr:
+				phonemeBuf=_espeak.espeakDLL.espeak_TextToPhonemes(ctypes.byref(textPtr),_espeak.espeakCHARS_WCHAR,0b10001)
+				if not phonemeBuf: continue
+				chunks.append(ctypes.string_at(phonemeBuf))
+			chunk="".join(chunks).decode('utf8') 
 			chunk=chunk.replace(u'ə͡l',u'ʊ͡l')
 			chunk=chunk.replace(u'a͡ɪ',u'ɑ͡ɪ')
 			chunk=chunk.replace(u'e͡ɪ',u'e͡i')
@@ -180,12 +182,6 @@ class SynthDriver(SynthDriver):
 			chunk=chunk.strip()
 			if not chunk: continue
 			log.info("IPA : %s"%chunk)
-			textPtr=ctypes.c_void_p(ctypes.addressof(textBuf))
-			phonemeBuf=_espeak.espeakDLL.espeak_TextToPhonemes(ctypes.byref(textPtr),_espeak.espeakCHARS_WCHAR,0b0001)
-			if not phonemeBuf: continue
-			newChunk=ctypes.string_at(phonemeBuf)
-			newChunk=newChunk.decode('utf8') 
-			log.info("eSpeak phonemes: %s"%newChunk)
 			for args in ipa.generateFramesAndTiming(chunk,speed=self._curRate,basePitch=self._curPitch,inflection=self._curInflection,clauseType=clauseType):
 				frame=args[0]
 				if frame:
