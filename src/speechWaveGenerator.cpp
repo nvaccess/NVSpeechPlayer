@@ -194,8 +194,8 @@ class SpeechWaveGeneratorImpl: public SpeechWaveGenerator {
 	SpeechWaveGeneratorImpl(int sr): sampleRate(sr), voiceGenerator(sr), fricGenerator(), cascade(sr), parallel(sr), frameManager(NULL) {
 	}
 
-	void generate(const int sampleCount, sample* sampleBuf) {
-		if(!frameManager) return; 
+	int generate(const int sampleCount, sample* sampleBuf) {
+		if(!frameManager) return 0; 
 		double val=0;
 		for(int i=0;i<sampleCount;++i) {
 			const speechPlayer_frame_t* frame=frameManager->getCurrentFrame();
@@ -207,9 +207,10 @@ class SpeechWaveGeneratorImpl: public SpeechWaveGenerator {
 				double out=(cascadeOut+parallelOut);
 				sampleBuf[i].value=max(min(out*4000,32000),-32000);
 			} else {
-				sampleBuf[i].value=0;
+				return i;
 			}
 		}
+		return sampleCount;
 	}
 
 	void setFrameManager(FrameManager* frameManager) {

@@ -14,14 +14,12 @@ http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
 #include "frame.h"
 #include "speechWaveGenerator.h"
-#include "player_winmm.h"
 #include "speechPlayer.h"
 
 typedef struct {
 	int sampleRate;
 	FrameManager* frameManager;
 	SpeechWaveGenerator* waveGenerator;
-	Player* player;
 } speechPlayer_handleInfo_t;
 
 speechPlayer_handle_t speechPlayer_initialize(int sampleRate) {
@@ -30,14 +28,16 @@ speechPlayer_handle_t speechPlayer_initialize(int sampleRate) {
 	playerHandleInfo->frameManager=FrameManager::create();
 	playerHandleInfo->waveGenerator=SpeechWaveGenerator::create(sampleRate);
 	playerHandleInfo->waveGenerator->setFrameManager(playerHandleInfo->frameManager);
-	playerHandleInfo->player=new Player_winmm(sampleRate);
-	playerHandleInfo->player->setInputWaveGenerator(playerHandleInfo->waveGenerator);
 	return (speechPlayer_handle_t)playerHandleInfo;
 }
 
 void speechPlayer_queueFrame(speechPlayer_handle_t playerHandle, speechPlayer_frame_t* framePtr, double minFrameDuration, double fadeDuration, int userIndex, bool purgeQueue) { 
 	speechPlayer_handleInfo_t* playerHandleInfo=(speechPlayer_handleInfo_t*)playerHandle;
 	playerHandleInfo->frameManager->queueFrame(framePtr,(playerHandleInfo->sampleRate*minFrameDuration)/1000.0,max((playerHandleInfo->sampleRate*fadeDuration)/1000.0,1),userIndex,purgeQueue);
+}
+
+int speechPlayer_synthesize(speechPlayer_handle_t playerHandle, int sampleCount, sample* sampleBuf) {
+	return ((speechPlayer_handleInfo_t*)playerHandle)->waveGenerator->generate(sampleCount,sampleBuf);
 }
 
 int speechPlayer_getLastIndex(speechPlayer_handle_t playerHandle) {
@@ -47,7 +47,6 @@ int speechPlayer_getLastIndex(speechPlayer_handle_t playerHandle) {
 
 void speechPlayer_terminate(speechPlayer_handle_t playerHandle) {
 	speechPlayer_handleInfo_t* playerHandleInfo=(speechPlayer_handleInfo_t*)playerHandle;
-	delete playerHandleInfo->player;
 	delete playerHandleInfo->waveGenerator;
 	delete playerHandleInfo->frameManager;
 	delete playerHandleInfo;

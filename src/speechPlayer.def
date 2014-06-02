@@ -1,5 +1,6 @@
 EXPORTS
 	speechPlayer_initialize
 	speechPlayer_queueFrame
+	speechPlayer_synthesize
 	speechPlayer_getLastIndex
 	speechPlayer_terminate

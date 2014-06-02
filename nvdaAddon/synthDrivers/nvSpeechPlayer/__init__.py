@@ -13,15 +13,59 @@
 ###
 
 import re
+import threading
 import math
 from collections import OrderedDict
 import ctypes
 import speechPlayer
 import ipa
+import config
+import nvwave
 import speech
 from logHandler import log
 from synthDrivers import _espeak
 from synthDriverHandler import SynthDriver, NumericSynthSetting, VoiceInfo
+
+class AudioThread(threading.Thread):
+
+	wavePlayer=None
+	keepAlive=True
+	isSpeaking=False
+	synthEvent=None
+	initializeEvent=None
+
+	def __init__(self,speechPlayerObj,sampleRate):
+		self.speechPlayer=speechPlayerObj
+		self.sampleRate=sampleRate
+		self.initializeEvent=threading.Event()
+		super(AudioThread,self).__init__()
+		self.start()
+		self.initializeEvent.wait()
+
+	def terminate(self):
+		self.initializeEvent.clear()
+		self.keepAlive=False
+		self.isSpeaking=False
+		self.synthEvent.set()
+		self.initializeEvent.wait()
+
+	def run(self):
+		try:
+			self.wavePlayer=nvwave.WavePlayer(channels=1, samplesPerSec=self.sampleRate, bitsPerSample=16, outputDevice=config.conf["speech"]["outputDevice"])
+			self.synthEvent=threading.Event()
+		finally:
+			self.initializeEvent.set()
+		while self.keepAlive:
+			self.synthEvent.wait()
+			self.synthEvent.clear()
+			while self.keepAlive:
+				data=self.speechPlayer.synthesize(8192)
+				if self.isSpeaking and data:
+					self.wavePlayer.feed(data)
+				else:
+					self.wavePlayer.idle()
+					break
+		self.initializeEvent.set()
 
 re_textPause=re.compile(ur"(?<=[.?!,:;])\s",re.DOTALL|re.UNICODE)
 
@@ -83,6 +127,7 @@ class SynthDriver(SynthDriver):
 		self.rate=50
 		self.volume=90
 		self.inflection=60
+		self.audioThread=AudioThread(self.player,16000)
 
 	@classmethod
 	def check(cls):
@@ -152,9 +197,14 @@ class SynthDriver(SynthDriver):
 					frame.preFormantGain*=self._curVolume
 				self.player.queueFrame(*args,userIndex=userIndex)
 			self.player.queueFrame(None,endPause,max(10.0,10.0/self._curRate))
+			self.audioThread.isSpeaking=True
+			self.audioThread.synthEvent.set()
 
 	def cancel(self):
-		self.player.queueFrame(None,1,1,purgeQueue=True)
+		self.player.queueFrame(None,20,20,purgeQueue=True)
+		self.audioThread.isSpeaking=False
+		self.audioThread.synthEvent.set()
+		self.audioThread.wavePlayer.stop()
 
 	def _get_rate(self):
 		return int(math.log(self._curRate/0.25,2)*25.0)
@@ -200,5 +250,6 @@ class SynthDriver(SynthDriver):
 		return d
 
 	def terminate(self):
+		self.audioThread.terminate()
 		del self.player
 		_espeak.terminate()

@@ -34,6 +34,7 @@ class FrameManagerImpl: public FrameManager {
 	frameRequest_t* oldFrameRequest;
 	frameRequest_t* newFrameRequest;
 	speechPlayer_frame_t curFrame;
+	bool curFrameIsNULL;
 	int sampleCounter;
 	int lastUserIndex;
 
@@ -52,6 +53,7 @@ class FrameManagerImpl: public FrameManager {
 			}
 		} else if(sampleCounter>(oldFrameRequest->minNumSamples)) {
 			if(!frameRequestQueue.empty()) {
+				curFrameIsNULL=false;
 				newFrameRequest=frameRequestQueue.front();
 				frameRequestQueue.pop();
 				if(newFrameRequest->NULLFrame) {
@@ -68,6 +70,8 @@ class FrameManagerImpl: public FrameManager {
 					sampleCounter=0;
 					newFrameRequest->frame.voicePitch+=(newFrameRequest->voicePitchInc*newFrameRequest->numFadeSamples);
 				}
+			} else if(oldFrameRequest->NULLFrame) {
+				curFrameIsNULL=true;
 			}
 		} else {
 			curFrame.voicePitch+=oldFrameRequest->voicePitchInc;
@@ -78,7 +82,7 @@ class FrameManagerImpl: public FrameManager {
 
 	public:
 
-	FrameManagerImpl(): curFrame(), newFrameRequest(NULL), lastUserIndex(-1)  {
+	FrameManagerImpl(): curFrame(), curFrameIsNULL(true), newFrameRequest(NULL), lastUserIndex(-1)  {
 		oldFrameRequest=new frameRequest_t();
 		oldFrameRequest->NULLFrame=true;
 	}
@@ -86,8 +90,8 @@ class FrameManagerImpl: public FrameManager {
 	void queueFrame(speechPlayer_frame_t* frame, int minNumSamples, int numFadeSamples, int userIndex, bool purgeQueue) {
 		frameLock.acquire();
 		frameRequest_t* frameRequest=new frameRequest_t;
-		frameRequest->minNumSamples=max(minNumSamples,1);
-		frameRequest->numFadeSamples=max(numFadeSamples,1);
+		frameRequest->minNumSamples=minNumSamples; //max(minNumSamples,1);
+		frameRequest->numFadeSamples=numFadeSamples; //max(numFadeSamples,1);
 		if(frame) {
 			frameRequest->NULLFrame=false;
 			memcpy(&(frameRequest->frame),frame,sizeof(speechPlayer_frame_t));
@@ -118,7 +122,7 @@ class FrameManagerImpl: public FrameManager {
 		frameLock.acquire();
 		updateCurrentFrame();
 		frameLock.release();
-		return &curFrame;
+		return curFrameIsNULL?NULL:&curFrame;
 	}
 
 	~FrameManagerImpl() {

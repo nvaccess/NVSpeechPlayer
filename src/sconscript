@@ -35,7 +35,6 @@ speechPlayerLib=env.SharedLibrary(
 	'speechPlayer.cpp',
 	'speechWaveGenerator.cpp',
 	'frame.cpp',
-	'player_winmm.cpp',
 	'speechPlayer.def',
 	],
 	LIBS=[

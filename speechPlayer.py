@@ -50,6 +50,14 @@ class SpeechPlayer(object):
 		frame=byref(frame) if frame else None
 		self._dll.speechPlayer_queueFrame(self._speechHandle,frame,c_double(minFrameDuration),c_double(fadeDuration),userIndex,purgeQueue)
 
+	def synthesize(self,numSamples):
+		buf=c_buffer(numSamples*2)
+		res=self._dll.speechPlayer_synthesize(self._speechHandle,numSamples,buf)
+		if res>0:
+			return string_at(buf,res*2)
+		else:
+			return None
+
 	def getLastIndex(self):
 		return self._dll.speechPlayer_getLastIndex(self._speechHandle)
 
