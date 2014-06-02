@@ -206,6 +206,9 @@ class SynthDriver(SynthDriver):
 		self.audioThread.synthEvent.set()
 		self.audioThread.wavePlayer.stop()
 
+	def pause(self,switch):
+		self.audioThread.wavePlayer.pause(switch)
+
 	def _get_rate(self):
 		return int(math.log(self._curRate/0.25,2)*25.0)
 
