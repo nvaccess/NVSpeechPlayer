@@ -155,13 +155,11 @@ def calculatePhonemeTimes(phonemeList,baseSpeed):
 			phonemeDuration=min(6.0/speed,6.0)
 			phonemeFadeDuration=0.001
 		elif phoneme.get('_isAfricate'):
-			phonemeDuration=30.0/speed
+			phonemeDuration=24.0/speed
 			phonemeFadeDuration=0.001
 		elif not phoneme.get('_isVoiced'):
 			phonemeDuration=45.0/speed
 		else: # is voiced
-			if not lastPhoneme or not lastPhoneme.get('_isVoiced') or lastPhoneme.get('_isAfricate'):
-				phonemeFadeDuration=1
 			if phoneme.get('_isVowel'):
 				if lastPhoneme and (lastPhoneme.get('_isLiquid') or lastPhoneme.get('_isSemivowel')): 
 					phonemeFadeDuration=25.0/speed
