@@ -73,7 +73,7 @@ voices={
 	'Adam':{
 		'cb1_mul':1.3,
 		'pa6_mul':1.3,
-		'fricationAmplitude':0.85,
+		'fricationAmplitude_mul':0.85,
 	},
 		'Benjamin':{
 		'cf1_mul':1.01,
@@ -84,7 +84,7 @@ voices={
 		'cf6':5000,
 		'cfNP_mul':0.9,
 		'cb1_mul':1.3,
-		'fricationAmplitude':0.7,
+		'fricationAmplitude_mul':0.7,
 		'pa6_mul':1.3,
 	},
 	'Caleb ':{
