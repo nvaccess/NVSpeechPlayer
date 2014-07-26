@@ -205,7 +205,7 @@ class SpeechWaveGeneratorImpl: public SpeechWaveGenerator {
 				double fric=fricGenerator.getNext()*0.3*frame->fricationAmplitude;
 				double parallelOut=parallel.getNext(frame,fric*frame->preFormantGain);
 				double out=(cascadeOut+parallelOut);
-				sampleBuf[i].value=max(min(out*4000,32000),-32000);
+				sampleBuf[i].value=(int)max(min(out*4000,32000),-32000);
 			} else {
 				return i;
 			}

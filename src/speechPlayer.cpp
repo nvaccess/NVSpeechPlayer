@@ -33,7 +33,7 @@ speechPlayer_handle_t speechPlayer_initialize(int sampleRate) {
 
 void speechPlayer_queueFrame(speechPlayer_handle_t playerHandle, speechPlayer_frame_t* framePtr, double minFrameDuration, double fadeDuration, int userIndex, bool purgeQueue) { 
 	speechPlayer_handleInfo_t* playerHandleInfo=(speechPlayer_handleInfo_t*)playerHandle;
-	playerHandleInfo->frameManager->queueFrame(framePtr,(playerHandleInfo->sampleRate*minFrameDuration)/1000.0,max((playerHandleInfo->sampleRate*fadeDuration)/1000.0,1),userIndex,purgeQueue);
+	playerHandleInfo->frameManager->queueFrame(framePtr,(int)(playerHandleInfo->sampleRate*minFrameDuration)/1000,max((int)(playerHandleInfo->sampleRate*fadeDuration)/1000,1),userIndex,purgeQueue);
 }
 
 int speechPlayer_synthesize(speechPlayer_handle_t playerHandle, int sampleCount, sample* sampleBuf) {

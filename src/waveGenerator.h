@@ -22,7 +22,7 @@ http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
 class WaveGenerator {
 	public:
-	virtual int generate(int bufSize, sample* buffer)=0;
+	virtual int generate(const int bufSize, sample* buffer)=0;
 	virtual ~WaveGenerator()=0 {};
 };
 
