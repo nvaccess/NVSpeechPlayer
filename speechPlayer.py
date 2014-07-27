@@ -43,12 +43,13 @@ dllPath=os.path.join(os.path.dirname(__file__),'speechPlayer.dll')
 class SpeechPlayer(object):
 
 	def __init__(self,sampleRate):
+		self.sampleRate=sampleRate
 		self._dll=cdll.LoadLibrary(dllPath)
 		self._speechHandle=self._dll.speechPlayer_initialize(sampleRate)
 
 	def queueFrame(self,frame,minFrameDuration,fadeDuration,userIndex=-1,purgeQueue=False):
 		frame=byref(frame) if frame else None
-		self._dll.speechPlayer_queueFrame(self._speechHandle,frame,c_double(minFrameDuration),c_double(fadeDuration),userIndex,purgeQueue)
+		self._dll.speechPlayer_queueFrame(self._speechHandle,frame,int(minFrameDuration*(self.sampleRate/1000.0)),int(fadeDuration*(self.sampleRate/1000.0)),userIndex,purgeQueue)
 
 	def synthesize(self,numSamples):
 		buf=c_buffer(numSamples*2)
