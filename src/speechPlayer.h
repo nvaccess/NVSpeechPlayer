@@ -20,11 +20,12 @@ extern "C" {
 #endif
 
 #include "frame.h"
+#include "sample.h"
 
 typedef void* speechPlayer_handle_t;
 
 speechPlayer_handle_t speechPlayer_initialize(int sampleRate);
-void speechPlayer_queueFrame(speechPlayer_handle_t playerHandle, speechPlayer_frame_t* frame,double minFrameDuration, double fadeDuration);
+void speechPlayer_queueFrame(speechPlayer_handle_t playerHandle, speechPlayer_frame_t* framePtr, double minFrameDuration, double fadeDuration, int userIndex, bool purgeQueue);
 int speechPlayer_synthesize(speechPlayer_handle_t playerHandle, int sampleCount, sample* sampleBuf); 
 int speechPlayer_getLastIndex(speechPlayer_handle_t playerHandle);
 void speechPlayer_terminate(speechPlayer_handle_t playerHandle);
