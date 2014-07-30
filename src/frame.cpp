@@ -70,7 +70,7 @@ class FrameManagerImpl: public FrameManager {
 					sampleCounter=0;
 					newFrameRequest->frame.voicePitch+=(newFrameRequest->voicePitchInc*newFrameRequest->numFadeSamples);
 				}
-			} else if(oldFrameRequest->NULLFrame) {
+			} else {
 				curFrameIsNULL=true;
 			}
 		} else {
