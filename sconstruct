@@ -15,7 +15,12 @@
 import os
 
 gitRev=None
-gitDir = Dir('#').Dir('.git').abspath
+gitDir = os.path.join(Dir('#').abspath,'.git')
+if os.path.isfile(gitDir):
+	line=file(gitDir).readline().rstrip()
+	start="gitdir: "
+	if line.startswith(start):
+		gitDir=File(gitDir).Dir(line[len(start):]).abspath
 try:
 	head = file(os.path.join(gitDir, "HEAD"), "r").read().rstrip()
 	if not head.startswith("ref: "):
