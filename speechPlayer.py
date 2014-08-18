@@ -35,6 +35,7 @@ class Frame(Structure):
 		'pa1','pa2','pa3','pa4','pa5','pa6',
 		'parallelBypass',
 		'preFormantGain',
+		'outputGain',
 		'endVoicePitch',
 	]]
 

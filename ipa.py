@@ -347,6 +347,7 @@ def generateFramesAndTiming(ipaText,speed=1,basePitch=100,inflection=0.5,clauseT
 			yield None,frameDuration,fadeDuration
 		else:
 			frame=speechPlayer.Frame()
-			frame.preFormantGain=2.0
+			frame.preFormantGain=1.0
+			frame.outputGain=2.0
 			applyPhonemeToFrame(frame,phoneme)
 			yield frame,frameDuration,fadeDuration
