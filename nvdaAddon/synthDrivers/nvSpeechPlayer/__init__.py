@@ -197,7 +197,7 @@ class SynthDriver(SynthDriver):
 			self.audioThread.synthEvent.set()
 
 	def cancel(self):
-		self.player.queueFrame(None,20,20,purgeQueue=True)
+		self.player.queueFrame(None,20,5,purgeQueue=True)
 		self.audioThread.isSpeaking=False
 		self.audioThread.synthEvent.set()
 		self.audioThread.wavePlayer.stop()
