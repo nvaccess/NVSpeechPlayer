@@ -31,12 +31,12 @@ speechPlayer_handle_t speechPlayer_initialize(int sampleRate) {
 	return (speechPlayer_handle_t)playerHandleInfo;
 }
 
-void speechPlayer_queueFrame(speechPlayer_handle_t playerHandle, speechPlayer_frame_t* framePtr, int minFrameDuration, int fadeDuration, int userIndex, bool purgeQueue) { 
+void speechPlayer_queueFrame(speechPlayer_handle_t playerHandle, speechPlayer_frame_t* framePtr, unsigned int minFrameDuration, unsigned int fadeDuration, int userIndex, bool purgeQueue) { 
 	speechPlayer_handleInfo_t* playerHandleInfo=(speechPlayer_handleInfo_t*)playerHandle;
 	playerHandleInfo->frameManager->queueFrame(framePtr,minFrameDuration,max(fadeDuration,1),userIndex,purgeQueue);
 }
 
-int speechPlayer_synthesize(speechPlayer_handle_t playerHandle, int sampleCount, sample* sampleBuf) {
+int speechPlayer_synthesize(speechPlayer_handle_t playerHandle, unsigned int sampleCount, sample* sampleBuf) {
 	return ((speechPlayer_handleInfo_t*)playerHandle)->waveGenerator->generate(sampleCount,sampleBuf);
 }
 

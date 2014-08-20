@@ -19,8 +19,8 @@ http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 using namespace std;
 
 struct frameRequest_t {
-	int minNumSamples;
-	int numFadeSamples;
+	unsigned int minNumSamples;
+	unsigned int numFadeSamples;
 	bool NULLFrame;
 	speechPlayer_frame_t frame;
 	double voicePitchInc; 
@@ -35,7 +35,7 @@ class FrameManagerImpl: public FrameManager {
 	frameRequest_t* newFrameRequest;
 	speechPlayer_frame_t curFrame;
 	bool curFrameIsNULL;
-	int sampleCounter;
+	unsigned int sampleCounter;
 	int lastUserIndex;
 
 	void updateCurrentFrame() {
@@ -82,12 +82,12 @@ class FrameManagerImpl: public FrameManager {
 
 	public:
 
-	FrameManagerImpl(): curFrame(), curFrameIsNULL(true), newFrameRequest(NULL), lastUserIndex(-1)  {
+	FrameManagerImpl(): curFrame(), curFrameIsNULL(true), sampleCounter(0), newFrameRequest(NULL), lastUserIndex(-1)  {
 		oldFrameRequest=new frameRequest_t();
 		oldFrameRequest->NULLFrame=true;
 	}
 
-	void queueFrame(speechPlayer_frame_t* frame, int minNumSamples, int numFadeSamples, int userIndex, bool purgeQueue) {
+	void queueFrame(speechPlayer_frame_t* frame, unsigned int minNumSamples, unsigned int numFadeSamples, int userIndex, bool purgeQueue) {
 		frameLock.acquire();
 		frameRequest_t* frameRequest=new frameRequest_t;
 		frameRequest->minNumSamples=minNumSamples; //max(minNumSamples,1);
