@@ -171,7 +171,7 @@ class SynthDriver(SynthDriver):
 			textPtr=ctypes.c_void_p(ctypes.addressof(textBuf))
 			chunks=[]
 			while textPtr:
-				phonemeBuf=_espeak.espeakDLL.espeak_TextToPhonemes(ctypes.byref(textPtr),_espeak.espeakCHARS_WCHAR,0b10001)
+				phonemeBuf=_espeak.espeakDLL.espeak_TextToPhonemes(ctypes.byref(textPtr),_espeak.espeakCHARS_WCHAR,0x36100+0x82)
 				if not phonemeBuf: continue
 				chunks.append(ctypes.string_at(phonemeBuf))
 			chunk="".join(chunks).decode('utf8') 
