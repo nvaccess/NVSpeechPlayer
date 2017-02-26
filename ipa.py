@@ -142,7 +142,7 @@ def calculatePhonemeTimes(phonemeList,baseSpeed):
 		if syllableStart:
 			syllableStress=phoneme.get('_stress')
 			if syllableStress:
-				speed=baseSpeed/1.4 if syllableStress==1 else baseSpeed/1.24
+				speed=baseSpeed/1.6 if syllableStress==1 else baseSpeed/1.15
 			else:
 				speed=baseSpeed
 		phonemeDuration=60.0/speed
@@ -164,7 +164,7 @@ def calculatePhonemeTimes(phonemeList,baseSpeed):
 				if lastPhoneme and (lastPhoneme.get('_isLiquid') or lastPhoneme.get('_isSemivowel')): 
 					phonemeFadeDuration=25.0/speed
 				if phoneme.get('_tiedTo'):
-					phonemeDuration=45.0/speed
+					phonemeDuration=40.0/speed
 				elif phoneme.get('_tiedFrom'):
 					phonemeDuration=20.0/speed
 					phonemeFadeDuration=20.0/speed
