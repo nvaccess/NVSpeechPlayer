@@ -62,17 +62,22 @@ class AudioThread(threading.Thread):
 		while self.keepAlive:
 			self.synthEvent.wait()
 			self.synthEvent.clear()
+			lastIndex=None
 			while self.keepAlive:
 				data=self.speechPlayer.synthesize(8192)
 				if self.isSpeaking and data:
 					indexNum=self.speechPlayer.getLastIndex()
 					self.wavePlayer.feed(
 						ctypes.string_at(data,data.length*2),
-						onDone=lambda indexNum=indexNum: synthIndexReached.notify(synth=self.synthRef(),index=indexNum)
+						onDone=lambda indexNum=indexNum: synthIndexReached.notify(synth=self.synthRef(),index=indexNum) if indexNum>=0 else False
 					)
+					lastIndex=indexNum
 				else:
-					synthDoneSpeaking.notify(synth=self.synthRef())
+					indexNum=self.speechPlayer.getLastIndex()
+					if indexNum>0 and indexNum!=lastIndex:
+						synthIndexReached.notify(synth=self.synthRef(),index=indexNum)
 					self.wavePlayer.idle()
+					synthDoneSpeaking.notify(synth=self.synthRef())
 					break
 		self.initializeEvent.set()
 
@@ -174,6 +179,7 @@ class SynthDriver(SynthDriver):
 					del speakList[index]
 					continue
 			index+=1
+		endPause=20
 		for item in speakList:
 			if isinstance(item,speech.PitchCommand):
 				pitchOffset=item.offset
