@@ -17,14 +17,17 @@ import threading
 import math
 from collections import OrderedDict
 import ctypes
-import speechPlayer
-import ipa
+import weakref
+from . import speechPlayer
+from . import ipa
 import config
 import nvwave
 import speech
 from logHandler import log
 from synthDrivers import _espeak
-from synthDriverHandler import SynthDriver, NumericSynthSetting, VoiceInfo
+from synthDriverHandler import SynthDriver, VoiceInfo, synthIndexReached, synthDoneSpeaking
+from driverHandler import NumericDriverSetting
+
 
 class AudioThread(threading.Thread):
 
@@ -34,7 +37,8 @@ class AudioThread(threading.Thread):
 	synthEvent=None
 	initializeEvent=None
 
-	def __init__(self,speechPlayerObj,sampleRate):
+	def __init__(self,synth, speechPlayerObj,sampleRate):
+		self.synthRef=weakref.ref(synth)
 		self.speechPlayer=speechPlayerObj
 		self.sampleRate=sampleRate
 		self.initializeEvent=threading.Event()
@@ -61,13 +65,18 @@ class AudioThread(threading.Thread):
 			while self.keepAlive:
 				data=self.speechPlayer.synthesize(8192)
 				if self.isSpeaking and data:
-					self.wavePlayer.feed(data)
+					indexNum=self.speechPlayer.getLastIndex()
+					self.wavePlayer.feed(
+						ctypes.string_at(data,data.length*2),
+						onDone=lambda indexNum=indexNum: synthIndexReached.notify(synth=self.synthRef(),index=indexNum)
+					)
 				else:
+					synthDoneSpeaking.notify(synth=self.synthRef())
 					self.wavePlayer.idle()
 					break
 		self.initializeEvent.set()
 
-re_textPause=re.compile(ur"(?<=[.?!,:;])\s",re.DOTALL|re.UNICODE)
+re_textPause=re.compile(r"(?<=[.?!,:;])\s",re.DOTALL|re.UNICODE)
 
 voices={
 	'Adam':{
@@ -117,7 +126,7 @@ class SynthDriver(SynthDriver):
 	def __init__(self):
 		if self.exposeExtraParams:
 			self._extraParamNames=[x[0] for x in speechPlayer.Frame._fields_]
-			self.supportedSettings=SynthDriver.supportedSettings+tuple(NumericSynthSetting("speechPlayer_%s"%x,"frame.%s"%x,normalStep=1,availableInSynthSettingsRing=False) for x in self._extraParamNames)
+			self.supportedSettings=SynthDriver.supportedSettings+tuple(NumericDriverSetting("speechPlayer_%s"%x,"frame.%s"%x,normalStep=1) for x in self._extraParamNames)
 			for x in self._extraParamNames:
 				setattr(self,"speechPlayer_%s"%x,50)
 		self.player=speechPlayer.SpeechPlayer(16000)
@@ -127,7 +136,7 @@ class SynthDriver(SynthDriver):
 		self.rate=50
 		self.volume=90
 		self.inflection=60
-		self.audioThread=AudioThread(self.player,16000)
+		self.audioThread=AudioThread(self,self.player,16000)
 
 	@classmethod
 	def check(cls):
@@ -138,63 +147,86 @@ class SynthDriver(SynthDriver):
 
 	supportedSettings=(SynthDriver.VoiceSetting(),SynthDriver.RateSetting(),SynthDriver.PitchSetting(),SynthDriver.VolumeSetting(),SynthDriver.InflectionSetting())
 
-	_curPitch=118
+	supportedCommands = {
+		speech.IndexCommand,
+		speech.PitchCommand,
+	}
+
+	supportedNotifications = {synthIndexReached,synthDoneSpeaking}
+
+	_curPitch=50
 	_curVoice='Adam'
 	_curInflection=0.5
 	_curVolume=1.0
 	_curRate=1.0
 
 	def speak(self,speakList):
-		userIndex=-1
-		for item in reversed(speakList):
-			if isinstance(item,speech.IndexCommand):
+		userIndex=None
+		pitchOffset=0
+		# Merge adjacent strings
+		index=0
+		while index<len(speakList):
+			item=speakList[index]
+			if index>0:
+				lastItem=speakList[index-1]
+				if isinstance(item,str) and isinstance(lastItem,str):
+					speakList[index-1]=" ".join([lastItem,item])
+					del speakList[index]
+					continue
+			index+=1
+		for item in speakList:
+			if isinstance(item,speech.PitchCommand):
+				pitchOffset=item.offset
+			elif isinstance(item,speech.IndexCommand):
 				userIndex=item.index
-				break
-		textList=re_textPause.split(" ".join(x for x in speakList if isinstance(x,basestring)))
-		lastIndex=len(textList)-1
-		for index,chunk in enumerate(textList):
-			if not chunk: continue
-			chunk=chunk.strip()
-			if not chunk: continue
-			clauseType=chunk[-1]
-			if clauseType in ('.','!'):
-				endPause=150
-			elif clauseType=='?':
-				endPause=150
-			elif clauseType==',':
-				endPause=120
-			else:
-				endPause=100
-				clauseType=None
-			endPause/=self._curRate
-			textBuf=ctypes.create_unicode_buffer(chunk)
-			textPtr=ctypes.c_void_p(ctypes.addressof(textBuf))
-			chunks=[]
-			while textPtr:
-				phonemeBuf=_espeak.espeakDLL.espeak_TextToPhonemes(ctypes.byref(textPtr),_espeak.espeakCHARS_WCHAR,0x36100+0x82)
-				if not phonemeBuf: continue
-				chunks.append(ctypes.string_at(phonemeBuf))
-			chunk="".join(chunks).decode('utf8') 
-			chunk=chunk.replace(u'ə͡l',u'ʊ͡l')
-			chunk=chunk.replace(u'a͡ɪ',u'ɑ͡ɪ')
-			chunk=chunk.replace(u'e͡ɪ',u'e͡i')
-			chunk=chunk.replace(u'ə͡ʊ',u'o͡u')
-			chunk=chunk.strip()
-			if not chunk: continue
-			log.info("IPA : %s"%chunk)
-			for args in ipa.generateFramesAndTiming(chunk,speed=self._curRate,basePitch=self._curPitch,inflection=self._curInflection,clauseType=clauseType):
-				frame=args[0]
-				if frame:
-					applyVoiceToFrame(frame,self._curVoice)
-					if self.exposeExtraParams:
-						for x in self._extraParamNames:
-							ratio=getattr(self,"speechPlayer_%s"%x)/50.0
-							setattr(frame,x,getattr(frame,x)*ratio)
-					frame.preFormantGain*=self._curVolume
-				self.player.queueFrame(*args,userIndex=userIndex)
-			self.player.queueFrame(None,endPause,max(10.0,10.0/self._curRate))
-			self.audioThread.isSpeaking=True
-			self.audioThread.synthEvent.set()
+			elif isinstance(item,str):
+				textList=re_textPause.split(item)
+				lastIndex=len(textList)-1
+				for index,chunk in enumerate(textList):
+					if not chunk: continue
+					chunk=chunk.strip()
+					if not chunk: continue
+					clauseType=chunk[-1]
+					if clauseType in ('.','!'):
+						endPause=150
+					elif clauseType=='?':
+						endPause=150
+					elif clauseType==',':
+						endPause=120
+					else:
+						endPause=100
+						clauseType=None
+					endPause/=self._curRate
+					textBuf=ctypes.create_unicode_buffer(chunk)
+					textPtr=ctypes.c_void_p(ctypes.addressof(textBuf))
+					chunks=[]
+					while textPtr:
+						phonemeBuf=_espeak.espeakDLL.espeak_TextToPhonemes(ctypes.byref(textPtr),_espeak.espeakCHARS_WCHAR,0x36100+0x82)
+						if not phonemeBuf: continue
+						chunks.append(ctypes.string_at(phonemeBuf))
+					chunk=b"".join(chunks).decode('utf8') 
+					chunk=chunk.replace('ə͡l','ʊ͡l')
+					chunk=chunk.replace('a͡ɪ','ɑ͡ɪ')
+					chunk=chunk.replace('e͡ɪ','e͡i')
+					chunk=chunk.replace('ə͡ʊ','o͡u')
+					chunk=chunk.strip()
+					if not chunk: continue
+					pitch=self._curPitch+pitchOffset
+					basePitch=25+(21.25*(pitch/12.5))
+					for args in ipa.generateFramesAndTiming(chunk,speed=self._curRate,basePitch=basePitch,inflection=self._curInflection,clauseType=clauseType):
+						frame=args[0]
+						if frame:
+							applyVoiceToFrame(frame,self._curVoice)
+							if self.exposeExtraParams:
+								for x in self._extraParamNames:
+									ratio=getattr(self,"speechPlayer_%s"%x)/50.0
+									setattr(frame,x,getattr(frame,x)*ratio)
+							frame.preFormantGain*=self._curVolume
+						self.player.queueFrame(*args,userIndex=userIndex)
+						userIndex=None
+		self.player.queueFrame(None,endPause,max(10.0,10.0/self._curRate),userIndex=userIndex)
+		self.audioThread.isSpeaking=True
+		self.audioThread.synthEvent.set()
 
 	def cancel(self):
 		self.player.queueFrame(None,20,5,purgeQueue=True)
@@ -212,10 +244,10 @@ class SynthDriver(SynthDriver):
 		self._curRate=0.25*(2**(val/25.0))
 
 	def _get_pitch(self):
-		return int(((self._curPitch-25)*12.5)/21.25)
+		return self._curPitch
 
 	def _set_pitch(self,val):
-		self._curPitch=25+(21.25*(val/12.5))
+		self._curPitch=val
 
 	def _get_volume(self):
 		return int(self._curVolume*75)
@@ -229,8 +261,6 @@ class SynthDriver(SynthDriver):
 	def _set_inflection(self,val):
 		self._curInflection=val*0.01
 
-	def _get_lastIndex(self):
-		return self.player.getLastIndex()
 	def _get_voice(self):
 		return self._curVoice
 

@@ -15,24 +15,24 @@
 import os
 import itertools
 import codecs
-import speechPlayer
+from . import speechPlayer
 
 dataPath=os.path.join(os.path.dirname(__file__),'data.py')
 
 data=eval(codecs.open(dataPath,'r','utf8').read(),None,None)
 
 def iterPhonemes(**kwargs):
-	for k,v in data.iteritems():
-		if all(v[x]==y for x,y in kwargs.iteritems()):
+	for k,v in data.items():
+		if all(v[x]==y for x,y in kwargs.items()):
 			yield k
 
 def setFrame(frame,phoneme):
 	values=data[phoneme]
-	for k,v in values.iteritems():
+	for k,v in values.items():
 		setattr(frame,k,v)
 
 def applyPhonemeToFrame(frame,phoneme):
-	for k,v in phoneme.iteritems():
+	for k,v in phoneme.items():
 		if not k.startswith('_'):
 			setattr(frame,k,v)
 
@@ -41,20 +41,20 @@ def _IPAToPhonemesHelper(text):
 	index=0
 	offset=0
 	curStress=0
-	for index in xrange(textLen):
+	for index in range(textLen):
 		index=index+offset
 		if index>=textLen:
 			break
 		char=text[index]
-		if char==u'ˈ':
+		if char=='ˈ':
 			curStress=1
 			continue
-		elif char==u'ˌ':
+		elif char=='ˌ':
 			curStress=2
 			continue
-		isLengthened=(text[index+1:index+2]==u'ː')
-		isTiedTo=(text[index+1:index+2]==u'͡')
-		isTiedFrom=(text[index-1:index]==u'͡') if index>0 else False
+		isLengthened=(text[index+1:index+2]=='ː')
+		isTiedTo=(text[index+1:index+2]=='͡')
+		isTiedFrom=(text[index-1:index]=='͡') if index>0 else False
 		phoneme=None
 		if isTiedTo:
 			phoneme=data.get(text[index:index+3])
@@ -121,14 +121,14 @@ def IPAToPhonemes(ipaText):
 def correctHPhonemes(phonemeList):
 	finalPhonemeIndex=len(phonemeList)-1
 	# Correct all h phonemes (including inserted aspirations) so that their formants match the next phoneme, or the previous if there is no next
-	for index in xrange(len(phonemeList)):
+	for index in range(len(phonemeList)):
 		prevPhoneme=phonemeList[index-1] if index>0 else None
 		curPhoneme=phonemeList[index]
 		nextPhoneme=phonemeList[index+1] if index<finalPhonemeIndex else None
 		if curPhoneme.get('_copyAdjacent'):
 			adjacent=nextPhoneme if nextPhoneme and not nextPhoneme.get('_silence') else prevPhoneme 
 			if adjacent:
-				for k,v in adjacent.iteritems():
+				for k,v in adjacent.items():
 					if not k.startswith('_') and k not in curPhoneme:
 						curPhoneme[k]=v
 
@@ -142,15 +142,15 @@ def calculatePhonemeTimes(phonemeList,baseSpeed):
 		if syllableStart:
 			syllableStress=phoneme.get('_stress')
 			if syllableStress:
-				speed=baseSpeed/1.6 if syllableStress==1 else baseSpeed/1.15
+				speed=baseSpeed/1.4 if syllableStress==1 else baseSpeed/1.1
 			else:
 				speed=baseSpeed
 		phonemeDuration=60.0/speed
 		phonemeFadeDuration=10.0/speed
 		if phoneme.get('_preStopGap'):
-			phonemeDuration=30.0/speed
+			phonemeDuration=41.0/speed
 		elif phoneme.get('_postStopAspiration'):
-			phonemeDuration=30.0/speed
+			phonemeDuration=20.0/speed
 		elif phoneme.get('_isStop'):
 			phonemeDuration=min(6.0/speed,6.0)
 			phonemeFadeDuration=0.001
@@ -187,7 +187,7 @@ def applyPitchPath(phonemeList,startIndex,endIndex,basePitch,inflection,startPit
 	startPitch=basePitch*(2**(((startPitchPercent-50)/50.0)*inflection))
 	endPitch=basePitch*(2**(((endPitchPercent-50)/50.0)*inflection))
 	voicedDuration=0
-	for index in xrange(startIndex,endIndex):
+	for index in range(startIndex,endIndex):
 		phoneme=phonemeList[index]
 		if phoneme.get('_isVoiced'):
 			voicedDuration+=phoneme['_duration']
@@ -195,7 +195,7 @@ def applyPitchPath(phonemeList,startIndex,endIndex,basePitch,inflection,startPit
 	pitchDelta=endPitch-startPitch
 	curPitch=startPitch
 	syllableStress=False
-	for index in xrange(startIndex,endIndex):
+	for index in range(startIndex,endIndex):
 		phoneme=phonemeList[index]
 		phoneme['voicePitch']=curPitch
 		if phoneme.get('_isVoiced'):
@@ -288,7 +288,7 @@ def calculatePhonemePitches(phonemeList,speed,basePitch,inflection,clauseType):
 	if (preHeadEnd-preHeadStart)>0:
 		applyPitchPath(phonemeList,preHeadStart,preHeadEnd,basePitch,inflection,intonationParams['preHeadStart'],intonationParams['preHeadEnd'])
 	nucleusStart=nucleusEnd=tailStart=tailEnd=len(phonemeList)
-	for index in xrange(nucleusEnd-1,preHeadEnd-1,-1):
+	for index in range(nucleusEnd-1,preHeadEnd-1,-1):
 		phoneme=phonemeList[index]
 		if phoneme.get('_syllableStart'):
 			syllableStress=phoneme.get('_stress')==1
@@ -314,12 +314,12 @@ def calculatePhonemePitches(phonemeList,speed,basePitch,inflection,clauseType):
 		steps=intonationParams['headSteps']
 		extendFrom=intonationParams['headExtendFrom']
 		stressStartPercentageGen=itertools.chain(steps,itertools.cycle(steps[extendFrom:]))
-		for index in xrange(preHeadEnd,nucleusStart+1):
+		for index in range(preHeadEnd,nucleusStart+1):
 			phoneme=phonemeList[index]
 			syllableStress=phoneme.get('_stress')==1
 			if phoneme.get('_syllableStart'):
 				if lastHeadStressStart is not None:
-					stressStartPitch=headEndPitch+(((headStartPitch-headEndPitch)/100.0)*stressStartPercentageGen.next())
+					stressStartPitch=headEndPitch+(((headStartPitch-headEndPitch)/100.0)*next(stressStartPercentageGen))
 					stressEndPitch=stressStartPitch+intonationParams['headStressEndDelta']
 					applyPitchPath(phonemeList,lastHeadStressStart,index,basePitch,inflection,stressStartPitch,stressEndPitch)
 					lastHeadStressStart=None

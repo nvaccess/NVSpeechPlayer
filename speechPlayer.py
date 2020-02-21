@@ -53,10 +53,11 @@ class SpeechPlayer(object):
 		self._dll.speechPlayer_queueFrame(self._speechHandle,frame,int(minFrameDuration*(self.sampleRate/1000.0)),int(fadeDuration*(self.sampleRate/1000.0)),userIndex,purgeQueue)
 
 	def synthesize(self,numSamples):
-		buf=c_buffer(numSamples*2)
+		buf=(c_short*numSamples)()
 		res=self._dll.speechPlayer_synthesize(self._speechHandle,numSamples,buf)
 		if res>0:
-			return string_at(buf,res*2)
+			buf.length=min(res,len(buf))
+			return buf
 		else:
 			return None
 
@@ -76,8 +77,8 @@ class VowelChart(object):
 				vowel=params.pop(0)
 				flag=params.pop(0)
 				if flag=='1': continue
-				starts=[int(params[x]) for x in xrange(3)]
-				ends=[int(params[x]) for x in xrange(3,6)]
+				starts=[int(params[x]) for x in range(3)]
+				ends=[int(params[x]) for x in range(3,6)]
 				self._vowels[vowel]=starts,ends
 
 	def applyVowel(self,frame,vowel,end=False):

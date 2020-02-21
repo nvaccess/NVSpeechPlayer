@@ -17,19 +17,19 @@ import os
 gitRev=None
 gitDir = os.path.join(Dir('#').abspath,'.git')
 if os.path.isfile(gitDir):
-	line=file(gitDir).readline().rstrip()
+	line=open(gitDir).readline().rstrip()
 	start="gitdir: "
 	if line.startswith(start):
 		gitDir=File(gitDir).Dir(line[len(start):]).abspath
 try:
-	head = file(os.path.join(gitDir, "HEAD"), "r").read().rstrip()
+	head = open(os.path.join(gitDir, "HEAD"), "r").read().rstrip()
 	if not head.startswith("ref: "):
 		# Detached head.
 		gitRev = "DETACHED-%s" % head[:7]
 	else:
 		# Strip the "ref: " prefix to get the ref.
 		ref = head[5:]
-		commit = file(os.path.join(gitDir, ref), "r").read().rstrip()
+		commit = open(os.path.join(gitDir, ref), "r").read().rstrip()
 		gitRev = "%s-%s" % (os.path.basename(ref),commit[:7])
 except RuntimeError:
 	pass
@@ -39,7 +39,7 @@ vars.Add(BoolVariable('release','Set to true to build a release version',True))
 vars.Add('version','version',gitRev)
 vars.Add('author','author',default='unknown')
 
-env=Environment(tools=['default','windowsSdk','textfile'],variables=vars,HOST_ARCH='x86',TARGET_ARCH='x86')
+env=Environment(tools=['default','textfile'],variables=vars,HOST_ARCH='x86',TARGET_ARCH='x86')
 
 # A builder to generate a zip archive.
 # We roll our own instead of using env.Zip because we want to create some archives
