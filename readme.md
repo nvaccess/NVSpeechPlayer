@@ -39,9 +39,9 @@ The rules for phoneme lengths, gaps, speed and intonation have been coded by han
  
 ## Building NV Speech Player
 You will need:
-- Python 2.7: http://www.python.org
-- SCons 2.3.0: http://www.scons.org/
-- Visual Studio 2012 Desktop (Express or professional)
+- Python 3.7: http://www.python.org
+- SCons 3: http://www.scons.org/
+- Visual Studio 2019 Community 
  
 To build: run scons
 
