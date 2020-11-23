@@ -18,7 +18,6 @@ http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 #include <list>
 #include "sample.h"
 #include "speechPlayer.h"
-#include "lock.h"
 
 class WaveGenerator {
 	public:

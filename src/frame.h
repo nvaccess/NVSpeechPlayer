@@ -15,7 +15,7 @@ http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 #ifndef SPEECHPLAYER_FRAME_H
 #define SPEECHPLAYER_FRAME_H
 
-#include "lock.h"
+#include "utils.h"
 
 typedef double speechPlayer_frameParam_t;
 
