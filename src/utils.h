@@ -19,8 +19,8 @@ http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
     #define M_PI 3.14159265358979323846
 #endif
 
-static int MAX(int a, int b) { return((a) > (b) ? a : b); }
-static int MIN(int a, int b) { return((a) < (b) ? a : b); }
+static inline int MAX(int a, int b) { return((a) > (b) ? a : b); }
+static inline int MIN(int a, int b) { return((a) < (b) ? a : b); }
 
 static inline int isnan (double x) {
 	if (x != x)
