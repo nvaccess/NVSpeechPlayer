@@ -21,7 +21,6 @@ Based on klsyn-88, found at http://linguistics.berkeley.edu/phonlab/resources/
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
-#include "debug.h"
 #include "utils.h"
 #include "speechWaveGenerator.h"
 

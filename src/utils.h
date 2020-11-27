@@ -27,10 +27,15 @@ http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 #define min(a,b)            (((a) < (b)) ? (a) : (b))
 #endif
 
-#include <float.h>
+static inline int isnan (double x) {
+	if (x != x)
+	return 1;
+	else
+	return 0;
+}
 
 inline double calculateValueAtFadePosition(double oldVal, double newVal, double curFadeRatio) {
-	if(_isnan(newVal)) return oldVal;
+	if(isnan(newVal)) return oldVal;
 	return oldVal+((newVal-oldVal)*curFadeRatio);
 }
 
