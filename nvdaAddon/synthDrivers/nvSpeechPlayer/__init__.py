@@ -1,7 +1,7 @@
 ﻿###
 #This file is a part of the NV Speech Player project. 
 #URL: https://bitbucket.org/nvaccess/speechplayer
-#Copyright 2014 NV Access Limited.
+#Copyright 2014-2021 NV Access Limited, Ty Gillespie.
 #This program is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License version 2.0, as published by
 #the Free Software Foundation.
@@ -27,6 +27,7 @@ from logHandler import log
 from synthDrivers import _espeak
 from synthDriverHandler import SynthDriver, VoiceInfo, synthIndexReached, synthDoneSpeaking
 from driverHandler import NumericDriverSetting
+from speech.commands import IndexCommand, PitchCommand
 
 
 class AudioThread(threading.Thread):
@@ -153,8 +154,8 @@ class SynthDriver(SynthDriver):
 	supportedSettings=(SynthDriver.VoiceSetting(),SynthDriver.RateSetting(),SynthDriver.PitchSetting(),SynthDriver.VolumeSetting(),SynthDriver.InflectionSetting())
 
 	supportedCommands = {
-		speech.IndexCommand,
-		speech.PitchCommand,
+		IndexCommand,
+		PitchCommand,
 	}
 
 	supportedNotifications = {synthIndexReached,synthDoneSpeaking}
@@ -183,7 +184,7 @@ class SynthDriver(SynthDriver):
 		for item in speakList:
 			if isinstance(item,speech.PitchCommand):
 				pitchOffset=item.offset
-			elif isinstance(item,speech.IndexCommand):
+			elif isinstance(item,IndexCommand):
 				userIndex=item.index
 			elif isinstance(item,str):
 				textList=re_textPause.split(item)
