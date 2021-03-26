@@ -26,12 +26,10 @@ import speech
 from logHandler import log
 from synthDrivers import _espeak
 from synthDriverHandler import SynthDriver, VoiceInfo, synthIndexReached, synthDoneSpeaking
-from driverHandler import NumericDriverSetting
+from autoSettingsUtils.driverSetting import NumericDriverSetting
 from speech.commands import IndexCommand, PitchCommand
 
-
 class AudioThread(threading.Thread):
-
 	wavePlayer=None
 	keepAlive=True
 	isSpeaking=False
