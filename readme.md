@@ -2,6 +2,12 @@
 A Klatt-based speech synthesis engine written in c++
 Author: NV Access Limited
 
+## Maintenance Note
+NV Access is no longer maintaining this project. If you make use of this project or find it interesting, and you have the time and expertise to maintain it, please feel free to fork it and let us know you are interested in taking it on.
+
+This includes the speechPlayer core itself, plus the nvSpeechPlayer NVDA add-on also in this repository.
+Note that the eSpeak-ng/espeak-ng project also includes a copy of the speechPlayer code as an alternative Klatt implementation.
+ 
 ## Overview
 NV Speech Player is a free and open-source prototype speech synthesizer that can be used by NVDA. It generates speech using Klatt synthesis, making it somewhat similar to speech synthesizers such as Dectalk and Eloquence.
 
