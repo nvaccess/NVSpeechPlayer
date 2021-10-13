@@ -4,4 +4,4 @@ description=A free Klatt-based speech synthesizer
 author=_author_
 version=_version_
 minimumNVDAVersion = 2019.3.0
-lastTestedNVDAVersion = 2019.3.1
+lastTestedNVDAVersion = 2020.4
