@@ -12,6 +12,7 @@ This license can be found at:
 http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 */
 
+#include <cstring>
 #include <queue>
 #include "utils.h"
 #include "frame.h"
@@ -29,7 +30,6 @@ struct frameRequest_t {
 
 class FrameManagerImpl: public FrameManager {
 	private:
-	LockableObject frameLock;
 	queue<frameRequest_t*> frameRequestQueue;
 	frameRequest_t* oldFrameRequest;
 	frameRequest_t* newFrameRequest;
@@ -88,7 +88,6 @@ class FrameManagerImpl: public FrameManager {
 	}
 
 	void queueFrame(speechPlayer_frame_t* frame, unsigned int minNumSamples, unsigned int numFadeSamples, int userIndex, bool purgeQueue) {
-		frameLock.acquire();
 		frameRequest_t* frameRequest=new frameRequest_t;
 		frameRequest->minNumSamples=minNumSamples; //max(minNumSamples,1);
 		frameRequest->numFadeSamples=numFadeSamples; //max(numFadeSamples,1);
@@ -111,7 +110,6 @@ class FrameManagerImpl: public FrameManager {
 			}
 		}
 		frameRequestQueue.push(frameRequest);
-		frameLock.release();
 	}
 
 	const int getLastIndex() {
@@ -119,9 +117,7 @@ class FrameManagerImpl: public FrameManager {
 	}
 
 	const speechPlayer_frame_t* const getCurrentFrame() {
-		frameLock.acquire();
 		updateCurrentFrame();
-		frameLock.release();
 		return curFrameIsNULL?NULL:&curFrame;
 	}
 

@@ -15,10 +15,22 @@ http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 #ifndef SPEECHPLAYER_UTILS_H
 #define SPEECHPLAYER_UTILS_H
 
-#include <float.h>
+#ifndef M_PI
+    #define M_PI 3.14159265358979323846
+#endif
+
+static inline int MAX(int a, int b) { return((a) > (b) ? a : b); }
+static inline int MIN(int a, int b) { return((a) < (b) ? a : b); }
+
+static inline int ISNAN (double x) {
+	if (x != x)
+	return 1;
+	else
+	return 0;
+}
 
 inline double calculateValueAtFadePosition(double oldVal, double newVal, double curFadeRatio) {
-	if(_isnan(newVal)) return oldVal;
+	if(ISNAN(newVal)) return oldVal;
 	return oldVal+((newVal-oldVal)*curFadeRatio);
 }
 

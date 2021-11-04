@@ -15,7 +15,7 @@ http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 #ifndef SPEECHPLAYER_FRAME_H
 #define SPEECHPLAYER_FRAME_H
 
-#include "lock.h"
+#include "utils.h"
 
 typedef double speechPlayer_frameParam_t;
 
@@ -50,7 +50,6 @@ class FrameManager {
 	virtual void queueFrame(speechPlayer_frame_t* frame, unsigned int minNumSamples, unsigned int numFadeSamples, int userIndex, bool purgeQueue)=0;
 	virtual const speechPlayer_frame_t* const getCurrentFrame()=0;
 	virtual const int getLastIndex()=0; 
-	virtual ~FrameManager()=0 {};
 };
 
 #endif
